@@ -1,5 +1,5 @@
 # Undergraduate-Project
-Dependencies needed:
+#Dependencies needed:
   pip install pyrebase
   pip install opencv-python
   pip install numpy
