@@ -49,7 +49,7 @@ if __name__ == '__main__':
         # initializes empty position list for parking spaces if no such json file exists
         position_list = []
     while True:
-        img = cv.imread("./sample3.jpg")  # open sample
+        img = cv.imread("./sample4.jpg")  # open sample
         # cv.rectangle(img, (110,160), (110 + 120, 160 + 270), (0,255,0))
         # draw initial retangle to first rest how to set up the width and height
         for position in position_list:  # draws all the rectangles
