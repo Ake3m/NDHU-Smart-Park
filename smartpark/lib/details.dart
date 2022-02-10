@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 
-class Details extends StatelessWidget {
+class DetailView extends StatefulWidget {
+  const DetailView({Key? key, required this.collection, required this.document})
+      : super(key: key);
+
   final String collection;
   final String document;
+  @override
+  _DetailViewState createState() => _DetailViewState();
+}
 
-  const Details({Key? key, required this.collection, required this.document})
-      : super(key: key);
+class _DetailViewState extends State<DetailView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '$document Parking Lot',
+          '${widget.document} Parking Lot',
         ),
         centerTitle: true,
         backgroundColor: const Color(0xFF4CC18A),
       ),
       body: Center(
-        child: Text("$collection - $document"),
+        child: Text("${widget.collection} - ${widget.document}"),
       ),
     );
   }
