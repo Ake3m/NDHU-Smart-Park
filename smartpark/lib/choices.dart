@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'locations.dart';
 
 class Choices extends StatelessWidget {
   const Choices({Key? key}) : super(key: key);
+
+  void goToLocations(BuildContext context, String vehicle) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Locations(vehicleType: vehicle),
+        ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,48 +41,56 @@ class Choices extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.max,
           children: [
-            Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(13)),
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(13),
-                      child: Image.asset(
-                        './assets/images/car.png',
-                        width: 370,
-                      )),
-                ),
-                const Text(
-                  'Car',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20),
-                ),
-              ],
-            ),
-            Column(children: [
-              Container(
-                padding: EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(13)),
-                child: ClipRRect(
-                    borderRadius: BorderRadius.circular(13),
-                    child: Image.asset(
-                      './assets/images/motorcycle.png',
-                      width: 370,
-                    )),
-              ),
-              const Text('Scooter/Motorcycle',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20))
-            ]),
+            GestureDetector(
+                onTap: () {
+                  goToLocations(context, 'Car');
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(13)),
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(13),
+                          child: Image.asset(
+                            './assets/images/car.png',
+                            width: 370,
+                          )),
+                    ),
+                    const Text(
+                      'Car',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20),
+                    ),
+                  ],
+                )),
+            GestureDetector(
+                onTap: () {
+                  goToLocations(context, 'Motorcycle');
+                },
+                child: Column(children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13)),
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(13),
+                        child: Image.asset(
+                          './assets/images/motorcycle.png',
+                          width: 370,
+                        )),
+                  ),
+                  const Text('Scooter/Motorcycle',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20))
+                ])),
           ],
         )));
   }
