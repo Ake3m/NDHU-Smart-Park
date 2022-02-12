@@ -54,26 +54,20 @@ class _DetailViewState extends State<DetailView> {
                       return const Text("Loading");
                     }
                     vacantLots = snapshot.data['lot'];
-                    // return ListView.builder(
-                    //     itemCount: vacantLots.length,
-                    //     itemBuilder: (context, index) {
-                    //       return ListTile(
-                    //         title: Text(
-                    //           'Lot ${index + 1}: ${vacantLots[index] ? 'Vacant' : 'Occupied'}',
-                    //           style: TextStyle(
-                    //               fontSize: 20.0,
-                    //               color:
-                    //                   vacantLots[index] ? Colors.green : Colors.red),
-                    //         ),
-                    //       );
-                    //     });
+
                     return GridView.count(
                       crossAxisCount: 4,
                       mainAxisSpacing: 10,
-                      crossAxisSpacing: 20,
+                      crossAxisSpacing: 5,
                       children: List.generate(vacantLots.length, (index) {
                         return Container(
-                          color: vacantLots[index] ? Colors.green : Colors.red,
+                          decoration: BoxDecoration(
+                              color:
+                                  vacantLots[index] ? Colors.green : Colors.red,
+                              borderRadius: BorderRadius.circular(50)),
+                          margin: const EdgeInsets.all(5),
+                          child: Center(child: Text((index + 1).toString())),
+                          // color: vacantLots[index] ? Colors.green : Colors.red,
                         );
                       }),
                     );
