@@ -60,7 +60,7 @@ def checkParkingSpaces(processed_image):
             img, position, (position[0]+width, position[1]+height), color, thickness)
         if vacant_lots != previous_list:
             previous_list=vacant_lots.copy()
-            db_ref.update({'lots': vacant_lots})
+            db_ref.update({'lot': vacant_lots})
             print("Updated")
 
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             position_list = json.load(infile)
             vacant_lots = [True for lot in position_list]
             print(vacant_lots)
-        db_ref = db.collection('test').document('BoTkaJw3GdL7rdkusTRR')
+        db_ref = db.collection('Car').document('test')
         # db_ref.update({'lots': vacant_lots})
 
     except:
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         position_list = []
         
     # gets access to webcam -- change to 0 for onboard camera
-    cap = cv.VideoCapture(1)
+    cap = cv.VideoCapture(0)
     if not cap.isOpened():
         print("Error opening camera")
         exit()
