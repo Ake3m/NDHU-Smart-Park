@@ -37,41 +37,48 @@ class _DetailViewState extends State<DetailView> {
         centerTitle: true,
         backgroundColor: const Color(0xFF4CC18A),
       ),
-      body: Center(
-        child: StreamBuilder(
-            stream: lotStream,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasError) {
-                return Text('Something went wrong');
-              }
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Text("Loading");
-              }
-              vacantLots = snapshot.data['lot'];
-              // return ListView.builder(
-              //     itemCount: vacantLots.length,
-              //     itemBuilder: (context, index) {
-              //       return ListTile(
-              //         title: Text(
-              //           'Lot ${index + 1}: ${vacantLots[index] ? 'Vacant' : 'Occupied'}',
-              //           style: TextStyle(
-              //               fontSize: 20.0,
-              //               color:
-              //                   vacantLots[index] ? Colors.green : Colors.red),
-              //         ),
-              //       );
-              //     });
-              return GridView.count(
-                crossAxisCount: 4,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 20,
-                children: List.generate(vacantLots.length, (index) {
-                  return Container(
-                    color: vacantLots[index] ? Colors.green : Colors.red,
-                  );
-                }),
-              );
-            }),
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 30, bottom: 30),
+            child: Text('Parking Lot view'),
+          ),
+          Expanded(
+              child: StreamBuilder(
+                  stream: lotStream,
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasError) {
+                      return const Text('Something went wrong');
+                    }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text("Loading");
+                    }
+                    vacantLots = snapshot.data['lot'];
+                    // return ListView.builder(
+                    //     itemCount: vacantLots.length,
+                    //     itemBuilder: (context, index) {
+                    //       return ListTile(
+                    //         title: Text(
+                    //           'Lot ${index + 1}: ${vacantLots[index] ? 'Vacant' : 'Occupied'}',
+                    //           style: TextStyle(
+                    //               fontSize: 20.0,
+                    //               color:
+                    //                   vacantLots[index] ? Colors.green : Colors.red),
+                    //         ),
+                    //       );
+                    //     });
+                    return GridView.count(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 20,
+                      children: List.generate(vacantLots.length, (index) {
+                        return Container(
+                          color: vacantLots[index] ? Colors.green : Colors.red,
+                        );
+                      }),
+                    );
+                  })),
+        ],
       ),
     );
   }
