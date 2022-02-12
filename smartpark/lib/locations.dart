@@ -9,7 +9,7 @@ class Locations extends StatelessWidget {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                DetailView(collection: collection, document: document)));
+                Details(collection: collection, document: document)));
   }
 
   final String vehicleType;
