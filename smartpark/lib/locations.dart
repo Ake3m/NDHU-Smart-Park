@@ -43,28 +43,41 @@ class Locations extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
-                  viewDetailed(context, vehicleType, 'Test');
+                  viewDetailed(context, vehicleType, 'test');
                 },
                 child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.red,
+                  ),
                   padding: const EdgeInsets.all(10),
-                  child: const Text('Test'),
-                  color: Colors.red,
+                  child: const Center(child: Text('Test')),
                 ),
               ),
               Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.amber,
+                ),
                 padding: const EdgeInsets.all(10),
-                child: const Text('Science and Engineering building 2'),
-                color: Colors.yellow,
+                child: const Center(
+                    child: Text('Science and Engineering building 2')),
               ),
               Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.indigo[400],
+                ),
                 padding: const EdgeInsets.all(10),
-                child: const Text('Administration Building'),
-                color: Colors.blue,
+                child: const Center(child: Text('Administration Building')),
               ),
               Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.orange[400],
+                ),
                 padding: const EdgeInsets.all(10),
-                child: const Text('Some other place'),
-                color: Colors.orange,
+                child: const Center(child: Text('Some other place')),
               )
             ],
           ),

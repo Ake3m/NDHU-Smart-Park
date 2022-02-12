@@ -9,7 +9,9 @@ class Details extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: Color(0xFF4CC18A),
         appBar: AppBar(
+          elevation: 0,
           centerTitle: true,
           title: const Text('Parking Lot View'),
           backgroundColor: const Color(0xFF4CC18A),
@@ -35,56 +37,99 @@ class _DetailViewState extends State<DetailView> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   late String coll;
-  String? doc;
+  late String doc;
   late List<dynamic> vacantLots;
+  late Stream lotStream;
   @override
   void initState() {
-    super.initState();
     coll = widget.collection;
     doc = widget.document;
+    debugPrint('Value is: $coll');
+    debugPrint(doc);
+    lotStream =
+        FirebaseFirestore.instance.collection(coll).doc(doc).snapshots();
+    super.initState();
   }
 
-  Stream lotStream =
-      FirebaseFirestore.instance.collection('Car').doc('test').snapshots();
+  Widget constructDashBoard(List<dynamic> lots, String name) {
+    int vacant = 0;
+
+    lots.forEach((lot) {
+      if (lot == true) {
+        vacant++;
+      }
+    });
+    return Container(
+        padding: EdgeInsets.all(50),
+        margin: EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF55505C),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Text(
+              '${name[0].toUpperCase()}${name.substring(1)} Parking Lot',
+              style: const TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            Padding(
+                padding: EdgeInsets.all(5),
+                child: Text('Vacant: ${vacant}/${lots.length}',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 35,
+                        fontWeight: FontWeight.bold))),
+          ],
+        ));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 30, bottom: 30),
-          child: Text('Parking Lot view'),
-        ),
-        Expanded(
-            child: StreamBuilder(
-                stream: lotStream,
-                builder: (BuildContext context, AsyncSnapshot snapshot) {
-                  if (snapshot.hasError) {
-                    return const Text('Something went wrong');
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Text("Loading");
-                  }
-                  vacantLots = snapshot.data['lot'];
+        // const Padding(
+        //   padding: EdgeInsets.only(top: 30, bottom: 30),
+        //   child: Text('Parking Lot view'),
+        // ),
 
-                  return GridView.count(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 5,
-                    children: List.generate(vacantLots.length, (index) {
-                      return Container(
-                        decoration: BoxDecoration(
-                            color:
-                                vacantLots[index] ? Colors.green : Colors.red,
-                            borderRadius: BorderRadius.circular(50)),
-                        margin: const EdgeInsets.all(5),
-                        child: Center(child: Text((index + 1).toString())),
-                        // color: vacantLots[index] ? Colors.green : Colors.red,
-                      );
-                    }),
-                  );
-                })),
+        StreamBuilder(
+            stream: lotStream,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasError) {
+                return const Text('Something went wrong');
+              }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text("Loading");
+              }
+              vacantLots = snapshot.data['lot'];
+
+              return Expanded(
+                  child: Column(children: [
+                constructDashBoard(vacantLots, doc),
+                Expanded(
+                    child: GridView.count(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 5,
+                  children: List.generate(vacantLots.length, (index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                          color: vacantLots[index] ? Colors.green : Colors.red,
+                          borderRadius: BorderRadius.circular(50)),
+                      margin: const EdgeInsets.all(5),
+                      child: Center(child: Text((index + 1).toString())),
+                      // color: vacantLots[index] ? Colors.green : Colors.red,
+                    );
+                  }),
+                )),
+              ]));
+            }),
       ],
     );
   }
 }
+
+//0xFF147B4B dark
+//0xFF4CC18A light
