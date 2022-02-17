@@ -1,5 +1,25 @@
+import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'details.dart';
+
+class LocationTile {
+  String imgUrl;
+  String tileTitle;
+  Color tileColor;
+
+  LocationTile(this.tileTitle, this.imgUrl, this.tileColor);
+
+  List<LocationTile> parkingLocations = [
+    LocationTile('test', './assets/images/wip.png', Colors.red),
+    LocationTile(
+        'Administration Building', './assets/images/wip.png', Colors.red),
+    LocationTile(
+        'Science and Engineering 2', './assets/images/wip.png', Colors.red),
+    LocationTile('Sports Center', './assets/images/wip.png', Colors.red),
+    LocationTile('Coming Soon', './assets/images/wip.png', Colors.red)
+  ];
+}
 
 class Locations extends StatelessWidget {
   const Locations({Key? key, required this.vehicleType}) : super(key: key);
