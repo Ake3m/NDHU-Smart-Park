@@ -5,12 +5,20 @@ import 'locationtile.dart';
 class Locations extends StatelessWidget {
   const Locations({Key? key, required this.vehicleType}) : super(key: key);
 
-  void viewDetailed(context, collection, document) {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                Details(collection: collection, document: document)));
+  void viewDetailed(context, collection, document, pathExist) {
+    if (pathExist == true) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  Details(collection: collection, document: document)));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text(
+        'Currently Not Available',
+        textAlign: TextAlign.center,
+      )));
+    }
   }
 
   final String vehicleType;
@@ -44,36 +52,44 @@ class Locations extends StatelessWidget {
               mainAxisSpacing: 20,
               children:
                   List.generate(LocationTile.parkingLocations.length, (index) {
-                return Container(
-                  padding: const EdgeInsets.only(
-                      top: 20, bottom: 5, left: 5, right: 5),
-                  decoration: BoxDecoration(
-                      color: LocationTile.parkingLocations[index].tileColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white,
-                          style: BorderStyle.solid,
-                          width: 4)),
-
-                  // color: LocationTile.parkingLocations[index].tileColor,
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
+                return GestureDetector(
+                    onTap: () {
+                      viewDetailed(
+                          context,
+                          vehicleType,
                           LocationTile.parkingLocations[index].tileTitle,
-                          style: const TextStyle(
+                          LocationTile.parkingLocations[index].pathExists);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.only(
+                          top: 20, bottom: 5, left: 5, right: 5),
+                      decoration: BoxDecoration(
+                          color: LocationTile.parkingLocations[index].tileColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
                               color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Expanded(
-                          child: Image.asset(
-                            LocationTile.parkingLocations[index].imgUrl,
-                          ),
-                        ),
-                      ]),
-                );
+                              style: BorderStyle.solid,
+                              width: 4)),
+
+                      // color: LocationTile.parkingLocations[index].tileColor,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              LocationTile.parkingLocations[index].tileTitle,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            Expanded(
+                              child: Image.asset(
+                                LocationTile.parkingLocations[index].imgUrl,
+                              ),
+                            ),
+                          ]),
+                    ));
               })
               // GestureDetector(
               //   onTap: () {
