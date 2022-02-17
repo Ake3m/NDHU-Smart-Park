@@ -83,7 +83,7 @@ class _DetailViewState extends State<DetailView> {
               style: const TextStyle(color: Colors.white, fontSize: 20),
             ),
             Padding(
-                padding: EdgeInsets.all(5),
+                padding: const EdgeInsets.all(5),
                 child: Text('Vacant: ${vacant}/${lots.length}',
                     style: const TextStyle(
                         color: Colors.white,
