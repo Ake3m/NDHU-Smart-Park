@@ -7,8 +7,12 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
-width = 120
-height = 265
+#previous width and height
+# width = 120
+# height = 265
+#new width and height
+width = 110
+height=230
 previous_list=[]
 
 # firebase setup section
@@ -81,7 +85,7 @@ if __name__ == '__main__':
         position_list = []
         
     # gets access to webcam -- change to 0 for onboard camera
-    cap = cv.VideoCapture(0)
+    cap = cv.VideoCapture(1)
     if not cap.isOpened():
         print("Error opening camera")
         exit()

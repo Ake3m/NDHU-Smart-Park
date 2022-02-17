@@ -21,8 +21,12 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 storage = firebase.storage() 
 
 
-width = 120  # sets width of 1 parking space
-height = 265  # sets height of 1 parking space
+#previous width and height
+# width = 120  # sets width of 1 parking space
+#height = 265  # sets height of 1 parking space
+#updated width and height
+width = 110
+height=230
 
 
 
@@ -49,7 +53,7 @@ if __name__ == '__main__':
         # initializes empty position list for parking spaces if no such json file exists
         position_list = []
     while True:
-        img = cv.imread("./sample5.jpg")  # open sample
+        img = cv.imread("./sample6.jpg")  # open sample
         # cv.rectangle(img, (110,160), (110 + 120, 160 + 270), (0,255,0))
         # draw initial retangle to first rest how to set up the width and height
         for position in position_list:  # draws all the rectangles
