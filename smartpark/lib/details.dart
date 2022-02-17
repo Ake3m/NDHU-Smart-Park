@@ -9,7 +9,8 @@ class Details extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xFF4CC18A),
+        // backgroundColor: Color(0xFF4CC18A),
+        backgroundColor: Color(0xFF9E9E9E),
         appBar: AppBar(
           elevation: 0,
           centerTitle: true,
@@ -110,14 +111,18 @@ class _DetailViewState extends State<DetailView> {
                 constructDashBoard(vacantLots, doc),
                 Expanded(
                     child: GridView.count(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 5,
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 0,
+                  crossAxisSpacing: 0,
+                  childAspectRatio: 0.7,
                   children: List.generate(vacantLots.length, (index) {
                     return Container(
                       decoration: BoxDecoration(
-                          color: vacantLots[index] ? Colors.green : Colors.red,
-                          borderRadius: BorderRadius.circular(50)),
+                        color: vacantLots[index]
+                            ? Colors.green
+                            : Colors
+                                .red, /*borderRadius: BorderRadius.circular(50)*/
+                      ),
                       margin: const EdgeInsets.all(5),
                       child: Center(child: Text((index + 1).toString())),
                       // color: vacantLots[index] ? Colors.green : Colors.red,
