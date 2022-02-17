@@ -9,7 +9,8 @@ class Details extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xFF4CC18A),
+        // backgroundColor: Color(0xFF4CC18A),
+        // backgroundColor: Color(0xFF9E9E9E),
         appBar: AppBar(
           elevation: 0,
           centerTitle: true,
@@ -60,24 +61,31 @@ class _DetailViewState extends State<DetailView> {
       }
     });
     return Container(
-        padding: EdgeInsets.all(50),
-        margin: EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
+        // padding: const EdgeInsets.all(30),
+        padding:
+            const EdgeInsets.only(left: 80, right: 80, top: 30, bottom: 30),
+        margin: const EdgeInsets.only(top: 10, bottom: 20, left: 10, right: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFF55505C),
+          color: const Color(0xFF4CC18A),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.max,
           children: [
+            SizedBox(
+              child: Image.asset("./assets/images/logo.png"),
+              height: 120,
+            ),
             Text(
               '${name[0].toUpperCase()}${name.substring(1)} Parking Lot',
               style: const TextStyle(color: Colors.white, fontSize: 20),
             ),
             Padding(
-                padding: EdgeInsets.all(5),
+                padding: const EdgeInsets.all(5),
                 child: Text('Vacant: ${vacant}/${lots.length}',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.white,
                         fontSize: 35,
                         fontWeight: FontWeight.bold))),
@@ -110,14 +118,18 @@ class _DetailViewState extends State<DetailView> {
                 constructDashBoard(vacantLots, doc),
                 Expanded(
                     child: GridView.count(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 5,
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 0,
+                  crossAxisSpacing: 0,
+                  childAspectRatio: 0.7,
                   children: List.generate(vacantLots.length, (index) {
                     return Container(
                       decoration: BoxDecoration(
-                          color: vacantLots[index] ? Colors.green : Colors.red,
-                          borderRadius: BorderRadius.circular(50)),
+                        color: vacantLots[index]
+                            ? Colors.green
+                            : Colors
+                                .red, /*borderRadius: BorderRadius.circular(50)*/
+                      ),
                       margin: const EdgeInsets.all(5),
                       child: Center(child: Text((index + 1).toString())),
                       // color: vacantLots[index] ? Colors.green : Colors.red,
@@ -133,3 +145,4 @@ class _DetailViewState extends State<DetailView> {
 
 //0xFF147B4B dark
 //0xFF4CC18A light
+//0xFF55505C gray
