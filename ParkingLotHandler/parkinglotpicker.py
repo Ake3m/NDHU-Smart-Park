@@ -1,24 +1,16 @@
 from ast import Break
 import cv2 as cv
 import json
-import pyrebase
+from firebase_admin import credentials, initialize_app, storage
 
-#firebase setup section
-firebaseConfig={
-    "apiKey": "AIzaSyAlrU3HO6rLkpp2e8miG3MUkklVfH0y1GU",
-  "authDomain": "smart-park-13acd.firebaseapp.com",
-  "databaseURL": "https://smart-park-13acd-default-rtdb.asia-southeast1.firebasedatabase.app",
-  "projectId": "smart-park-13acd",
-  "storageBucket": "smart-park-13acd.appspot.com",
-  "messagingSenderId": "524600567382",
-  "appId": "1:524600567382:web:448bc11ef6b98106d33df7",
-  "measurementId": "G-TVB91EHSG8"
-}
-
-firebase = pyrebase.initialize_app(firebaseConfig)
 
 #setting up storage
-storage = firebase.storage() 
+
+cred=credentials.Certificate("../serviceAccountKey.json")
+initialize_app(cred, {'storageBucket': 'smart-park-13acd.appspot.com'})
+bucket = storage.bucket()
+
+
 
 
 #previous width and height
@@ -63,4 +55,7 @@ if __name__ == '__main__':
         k=cv.waitKey(1)
         if k == ord('q'):
             break
-    storage.child("parkinglots.json").put("parkinglots.json")
+    # storage.child("parkinglots.json").put("parkinglots.json")
+    blob = bucket.blob('parkinglots.json')
+    blob.upload_from_filename("parkinglots.json")
+
