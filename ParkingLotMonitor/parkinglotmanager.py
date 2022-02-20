@@ -1,11 +1,11 @@
 import cv2 as cv
 import numpy as np
-import pyrebase
 import json
 import time
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import storage
 
 #previous width and height
 # width = 120
@@ -15,28 +15,11 @@ width = 110
 height=230
 previous_list=[]
 
-# firebase setup section
-firebaseConfig = {
-    "apiKey": "AIzaSyAlrU3HO6rLkpp2e8miG3MUkklVfH0y1GU",
-    "authDomain": "smart-park-13acd.firebaseapp.com",
-    "databaseURL": "https://smart-park-13acd-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "projectId": "smart-park-13acd",
-    "storageBucket": "smart-park-13acd.appspot.com",
-    "messagingSenderId": "524600567382",
-    "appId": "1:524600567382:web:448bc11ef6b98106d33df7",
-    "measurementId": "G-TVB91EHSG8"
-}
-
-firebase = pyrebase.initialize_app(firebaseConfig)
-
-
-# setting up storage
-storage = firebase.storage()
-
 # setting up firebase admin
 cred = credentials.Certificate("./serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred, {'storageBucket': 'smart-park-13acd.appspot.com'})
 db = firestore.client()
+bucket=storage.bucket()
 
 
 def checkParkingSpaces(processed_image):
@@ -70,9 +53,8 @@ def checkParkingSpaces(processed_image):
 
 if __name__ == '__main__':
     try:
-        storage.child("parkinglots.json").download(
-            "./ParkingLotMonitor/positionlist.json")
-        # time.delay(5) #wait for 5 seconds then open the file
+        blob = bucket.blob("parkinglots.json") #puts the file parkinglots.json as a blob
+        blob.download_to_filename("./ParkingLotMonitor/positionlist.json") #downloads blob to filename
         with open('./ParkingLotMonitor/positionlist.json', 'r') as infile:
             position_list = json.load(infile)
             vacant_lots = [True for lot in position_list]
@@ -85,7 +67,7 @@ if __name__ == '__main__':
         position_list = []
         
     # gets access to webcam -- change to 0 for onboard camera
-    cap = cv.VideoCapture(1)
+    cap = cv.VideoCapture(0)
     if not cap.isOpened():
         print("Error opening camera")
         exit()
@@ -100,5 +82,8 @@ if __name__ == '__main__':
         imgDilate = cv.dilate(imgMedian, kernel, iterations=1)
         checkParkingSpaces(imgDilate)
 
-        cv.imshow("FeeD", img)
-        cv.waitKey(100)
+        cv.imshow("Feed", img)
+        k=cv.waitKey(100)
+        if k==ord('q'):
+            break
+        
