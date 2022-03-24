@@ -1,3 +1,4 @@
+from gc import collect
 import os
 from pathlib import Path
 import cv2 as cv
@@ -6,6 +7,8 @@ from firebase_admin import initialize_app
 from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import storage
+
+# from ParkingLotManager.parkinglotmanager import checkParkingSpaces
 
 
 #GLOBAL VARIABLES SECTION
@@ -20,6 +23,10 @@ sample_points = [] #list holding the sample points
 position_list = [] #list holding the position of each lot
 width=0
 height=0
+lot_names=[]
+lot_types=[]
+vacant_lots=[]
+previous_list=[]
 
 #FIREBASE CONFIGURATION SETUP
 cred=credentials.Certificate("./serviceAccountKey.json")
@@ -69,10 +76,61 @@ def drawSample(selected):
         elif k==ord('r'):
             imgCopy=cv.imread('./ParkingLotManager/Samples/{}'.format(selected),1)
     cv.destroyAllWindows()
+def checkParkingSpaces(image, width, height, position_list):
+    global previous_list
+
+    for i, position in enumerate(position_list):
+        x,y=position
+        cropped_img=image[y:y+height, x:x+width]
+        #add detection code here
+
+        cv.rectangle(image, position, (position[0]+width, position[1]+height), (0,255,0), 3)
 
 
 def monitor():
-    pass
+    global lot_types
+    global lot_names
+    global position_list
+    global vacant_lots
+    global width, height
+    #retrieve values needed from database
+    print("Which parking lot type would you like to monitor?")
+    collections=database.collections()
+    counter=1
+    lot_types=[]
+    for collection in collections:
+        lot_types.append(collection.id)
+        print("{}.{}".format(counter,collection.id))
+        counter+=1
+    collection_choice=lot_types[int(input())-1]
+    print("Which Parking Lot would you like to monitor?")
+    documents=database.collection(collection_choice).stream()
+    counter=1
+    for doc in documents:
+        lot_names.append(doc.id)
+        print("{}.{}".format(counter,doc.id))
+        counter+=1
+    doc_choice=lot_names[int(input())-1]
+
+    parking_lot_info=database.collection(collection_choice).document(doc_choice).get().to_dict() #gets the data from database and converts to dictionary
+    for i in range(len(parking_lot_info["x"])):
+        position_list.append([parking_lot_info["x"][i],parking_lot_info["y"][i]])
+    vacant_lots=parking_lot_info["lot"]
+    width=parking_lot_info["width"]
+    height=parking_lot_info["height"]
+    #access camera and check lot
+    cap=cv.VideoCapture(0) #change to 0 for laptop webcam, 1 for external webcam
+    if not cap.isOpened():
+        print("Error opening camera")
+        exit()
+    while True:
+        flag, img=cap.read()
+        checkParkingSpaces(img, width, height, position_list)
+        cv.imshow("Monitor feed", img)
+        k=cv.waitKey(100)
+        if k==ord('q'):
+            cv.destroyAllWindows()
+            break
 
 
 def edit():
