@@ -58,7 +58,7 @@ def drawSample(selected):
     print("Drag the mouse over the area of 1 parking space.")
     print("If you are satisfied, press \'s\' to save sample.")
     print("if you want to redo, press \'r\'.")
-    imgCopy=cv.imread('./ParkingLotMonitor/Samples/{}'.format(selected),1)
+    imgCopy=cv.imread('./ParkingLotManager/Samples/{}'.format(selected),1)
     while True:
         cv.imshow("Draw sample", imgCopy)
         cv.setMouseCallback("Draw sample", draw)
@@ -67,7 +67,7 @@ def drawSample(selected):
             sample_points.extend([ix,iy,ex,ey])
             break
         elif k==ord('r'):
-            imgCopy=cv.imread('./ParkingLotMonitor/Samples/{}'.format(selected),1)
+            imgCopy=cv.imread('./ParkingLotManager/Samples/{}'.format(selected),1)
     cv.destroyAllWindows()
 
 
@@ -108,7 +108,7 @@ def create():
     if ans == 'N' or ans == 'n' or ans == 'No' or ans == 'no':
         print("Please place the sample image in the folder then try again.")
     elif ans == 'Y' or ans == 'y' or ans == 'Yes' or ans == 'yes':
-        sample_images = os.listdir("./ParkingLotMonitor/Samples")
+        sample_images = os.listdir("./ParkingLotManager/Samples")
         print("Please select an image from the folder")
         counter = 1
         for sample in sample_images:
@@ -123,7 +123,7 @@ def create():
         print("Press \'s\' to save.")
         while True:
             sample_img = cv.imread(
-            "./ParkingLotMonitor/Samples/{}".format(selected_img))
+            "./ParkingLotManager/Samples/{}".format(selected_img))
             for position in position_list:
                 cv.rectangle(sample_img, tuple(position), (position[0]+width, position[1]+height), (0,255,0),3)
             cv.imshow("Outline Parking Lot", sample_img)
@@ -142,8 +142,10 @@ def create():
             "capacity":len(vacant_lots),
             "x": x_positions,
             "y": y_positions,
-            "lots": vacant_lots,
+            "lot": vacant_lots,
             "lotsPerRow": lots_per_row,
+            "width": width,
+            "height": height
         }
         
         db_ref=database.collection(parkinglot_type).document(parkinglot_name).set(data)
@@ -159,7 +161,7 @@ def main():
         print("1. Monitor A Parking Lot.\n2. Create Parking Lot.\n3. Edit Existing Parking Lot.\n4. Exit")
         choice = int(input())
         if choice == 1:
-            pass
+            monitor()
         elif choice == 2:
             create()
         elif choice == 3:
