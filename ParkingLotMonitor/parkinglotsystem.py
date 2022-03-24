@@ -134,12 +134,16 @@ def create():
                 break
         print("Lastly, how many lots per row are there?")
         lots_per_row=int(input())
+        x_positions=[position[0] for position in position_list]
+        y_positions=[position[1] for position in position_list]
         vacant_lots=[True for lot in position_list]
         data={
             "name": parkinglot_name,
             "capacity":len(vacant_lots),
+            "x": x_positions,
+            "y": y_positions,
             "lots": vacant_lots,
-            "lotsPerRow": lots_per_row
+            "lotsPerRow": lots_per_row,
         }
         
         db_ref=database.collection(parkinglot_type).document(parkinglot_name).set(data)
