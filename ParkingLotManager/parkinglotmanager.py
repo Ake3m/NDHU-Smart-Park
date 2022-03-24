@@ -67,7 +67,7 @@ if __name__ == '__main__':
         position_list = []
         
     # gets access to webcam -- change to 0 for onboard camera
-    cap = cv.VideoCapture(0)
+    cap = cv.VideoCapture(1)
     if not cap.isOpened():
         print("Error opening camera")
         exit()
@@ -84,6 +84,6 @@ if __name__ == '__main__':
 
         cv.imshow("Feed", img)
         k=cv.waitKey(100)
-        if k==ord('q'):
+        if k==ord('q'): #press q to quit
             break
         
