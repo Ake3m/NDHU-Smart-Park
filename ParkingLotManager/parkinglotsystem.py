@@ -1,7 +1,6 @@
 from gc import collect
 import os
 from pathlib import Path
-from re import X
 import cv2 as cv
 import numpy as np
 from firebase_admin import initialize_app
