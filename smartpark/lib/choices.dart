@@ -70,7 +70,7 @@ class Choices extends StatelessWidget {
                 )),
             GestureDetector(
                 onTap: () {
-                  goToLocations(context, 'Motorcycle');
+                  goToLocations(context, 'Scooter');
                 },
                 child: Column(children: [
                   Container(
