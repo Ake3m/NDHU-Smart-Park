@@ -149,7 +149,7 @@ def monitor():
 
 
 def edit():
-    global width, height
+    global width, height, position_list
     # retrieve values needed from database
     print("Which parking lot type would you like to edit?")
     collections = database.collections()
@@ -195,10 +195,13 @@ def edit():
     x_positions = [position[0] for position in position_list]
     y_positions = [position[1] for position in position_list]
     vacant_lots = [True for lot in position_list]
+    print("Enter updated number of lots per row")
+    lotsPerRow=int(input())
     parking_lot_updated_info.update({
         "x": x_positions,
         "y": y_positions,
-        "lot":vacant_lots
+        "lot":vacant_lots,
+        "lotsPerRow": lotsPerRow
     })
     print("Information successfully updated")    
 
@@ -208,6 +211,8 @@ def create():
     global imgCopy
     global width
     global height
+    global position_list
+    position_list=[]
     print("What type of parking lot do you want to create?")
     print("1.Car\n2.Motorcycle/Scooter")
     satisfied = False
