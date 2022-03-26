@@ -62,7 +62,7 @@ class Locations extends StatelessWidget {
               LocationTile.parkingLocations.add(LocationTile(
                   data['name'].toString(),
                   './assets/images/logo.png',
-                  const Color.fromARGB(255, 0, 110, 64),
+                  Color(int.parse(data['tileColor'])),
                   true));
             }
             return Expanded(
@@ -119,8 +119,6 @@ class Locations extends StatelessWidget {
             );
           },
         ),
-        // DynamicLocations(vehicleType: vehicleType),
-        // DynamicLocations(vehicleType: vehicleType),
       ]),
     );
   }
