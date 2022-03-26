@@ -178,16 +178,9 @@ def edit():
     width = parking_lot_info["width"]
     height = parking_lot_info["height"]
     sample_images = os.listdir("./ParkingLotManager/Samples")
-    print("Please select an image from the folder")
-    counter = 1
-    for sample in sample_images:
-        print("{}.{}".format(counter, sample.capitalize()))
-        counter += 1
-    selection = int(input())
-    selected_img = sample_images[selection-1]
     while True:
         sample_img = cv.imread(
-            "./ParkingLotManager/Samples/{}".format(selected_img))
+            "./ParkingLotManager/Samples/{}".format(parking_lot_info["imgURL"]))
         for position in position_list:
             cv.rectangle(sample_img, tuple(
                 position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
@@ -281,7 +274,7 @@ def create():
             "height": height,
             "imgURL": selected_img,
             "tileColor": generateHexColor(),
-            
+
         }
 
         db_ref = database.collection(parkinglot_type).document(
