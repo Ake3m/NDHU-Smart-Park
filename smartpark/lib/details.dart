@@ -55,11 +55,11 @@ class _DetailViewState extends State<DetailView> {
   Widget constructDashBoard(List<dynamic> lots, String name) {
     int vacant = 0;
 
-    lots.forEach((lot) {
+    for (var lot in lots) {
       if (lot == true) {
         vacant++;
       }
-    });
+    }
     return Container(
         // padding: const EdgeInsets.all(30),
         padding:
@@ -84,10 +84,10 @@ class _DetailViewState extends State<DetailView> {
             ),
             Padding(
                 padding: const EdgeInsets.all(5),
-                child: Text('Vacant: ${vacant}/${lots.length}',
+                child: Text('Vacant: $vacant/${lots.length}',
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 35,
+                        fontSize: 30,
                         fontWeight: FontWeight.bold))),
           ],
         ));
