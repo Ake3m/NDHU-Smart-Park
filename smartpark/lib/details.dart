@@ -112,13 +112,14 @@ class _DetailViewState extends State<DetailView> {
                 return const Text("Loading");
               }
               vacantLots = snapshot.data['lot'];
+              int lotsPerRow = snapshot.data['lotsPerRow'];
 
               return Expanded(
                   child: Column(children: [
                 constructDashBoard(vacantLots, doc),
                 Expanded(
                     child: GridView.count(
-                  crossAxisCount: 5,
+                  crossAxisCount: lotsPerRow,
                   mainAxisSpacing: 0,
                   crossAxisSpacing: 0,
                   childAspectRatio: 0.7,

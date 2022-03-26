@@ -58,11 +58,15 @@ class Locations extends StatelessWidget {
               return const Text('Loading..');
             }
             dbData = snapshot.data!.docs.map((doc) => doc.data()).toList();
+            if (LocationTile.parkingLocations.length != 4) {
+              LocationTile.parkingLocations
+                  .removeRange(4, LocationTile.parkingLocations.length);
+            }
             for (var data in dbData) {
               LocationTile.parkingLocations.add(LocationTile(
                   data['name'].toString(),
                   './assets/images/logo.png',
-                  const Color.fromARGB(255, 0, 110, 64),
+                  Color(int.parse(data['tileColor'])),
                   true));
             }
             return Expanded(
@@ -119,8 +123,6 @@ class Locations extends StatelessWidget {
             );
           },
         ),
-        // DynamicLocations(vehicleType: vehicleType),
-        // DynamicLocations(vehicleType: vehicleType),
       ]),
     );
   }
