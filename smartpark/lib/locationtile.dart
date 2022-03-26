@@ -9,8 +9,6 @@ class LocationTile {
   LocationTile(this.tileTitle, this.imgUrl, this.tileColor, this.pathExists);
 
   static List<LocationTile> parkingLocations = [
-    LocationTile('test', './assets/images/logo.png',
-        const Color.fromARGB(255, 9, 228, 228), true),
     LocationTile('Administration Building', './assets/images/admin.png',
         const Color.fromARGB(255, 47, 49, 139), false),
     LocationTile(

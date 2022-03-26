@@ -1,4 +1,3 @@
-from gc import collect
 import os
 from pathlib import Path
 import cv2 as cv
@@ -7,8 +6,7 @@ from firebase_admin import initialize_app
 from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import storage
-
-# from ParkingLotManager.parkinglotmanager import checkParkingSpaces
+import random
 
 
 # GLOBAL VARIABLES SECTION
@@ -33,6 +31,11 @@ cred = credentials.Certificate("./serviceAccountKey.json")
 initialize_app(cred, {'storageBucket': 'smart-park-13acd.appspot.com'})
 database = firestore.client()
 
+def generateHexColor():
+    random_number = random.randint(0,16777215)
+    hex_number = str(hex(random_number))
+    hex_number ='0xFF'+ hex_number[2:]
+    return hex_number
 
 def draw(event, x, y, flags, parameters):
     global ix, iy, drawing, ex, ey
@@ -276,7 +279,9 @@ def create():
             "lotsPerRow": lots_per_row,
             "width": width,
             "height": height,
-            "imgURL": selected_img
+            "imgURL": selected_img,
+            "tileColor": generateHexColor(),
+            
         }
 
         db_ref = database.collection(parkinglot_type).document(
