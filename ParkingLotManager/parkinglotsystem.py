@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from charset_normalizer import detect
 import cv2 as cv
 import numpy as np
 from firebase_admin import initialize_app
@@ -7,6 +8,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from firebase_admin import storage
 import random
+
 
 
 # GLOBAL VARIABLES SECTION
@@ -25,6 +27,11 @@ lot_names = []
 lot_types = []
 vacant_lots = []
 previous_list = []
+clas_names=[]
+
+
+confidence_threshold=0.2
+nms_threshold=0.3
 
 # FIREBASE CONFIGURATION SETUP
 cred = credentials.Certificate("./serviceAccountKey.json")
@@ -86,17 +93,67 @@ def drawSample(selected):
                 './ParkingLotManager/Samples/{}'.format(selected), 1)
     cv.destroyAllWindows()
 
+def findObjects(outputs, img):
+    global confidence_threshold, nms_threshold,class_names
+    img_height, img_width, channels=img.shape
+    bounding_box=[]
+    classIds=[]
+    confidence_list=[]
 
-def checkParkingSpaces(image, width, height, position_list):
-    global previous_list
+    for output in outputs:
+        for detection in output:
+            scores=detection[5:] #removes the first 5 entries in order to look at the probabilities
+            classId=np.argmax(scores) #finds the index with the heighest probability
+            confidence=scores[classId] #finds the confidence value
+            if confidence>confidence_threshold:
+                width, height=int(detection[2]*img_width), int(detection[3]*img_height)
+                #center_x, center_y=int((detection[0]*img_width)-width/2), int((detection[1]*img_height)-height/2) #changes center x and y to left most point
+                center_x, center_y=int((detection[0]*img_width)), int((detection[1]*img_height)) #gets the center x and y
 
+                bounding_box.append([center_x, center_y, width, height])
+                classIds.append(classId)
+                confidence_list.append(float(confidence))
+    print(len(bounding_box))
+    indices=cv.dnn.NMSBoxes(bounding_box, confidence_list, confidence_threshold, nms_threshold)
+    confident_boxes=[]
+    for i in indices:
+        box=bounding_box[i]
+        x,y,w,h=box[0],box[1],box[2],box[3]
+        cv.rectangle(img, (x,y),(x+0,y+0),(255,255,255), 10)
+        cv.putText(img, f'{class_names[classIds[i]]} {int(confidence_list[i]*100)}%', (x,y), cv.FONT_HERSHEY_SIMPLEX,0.6,(255,255,255), 2)
+        confident_boxes.append(box)
+    
+    return confident_boxes
+
+
+
+def checkParkingSpaces(image, width, height, position_list, confident_boxes, coll, doc):
+    global previous_list, vacant_lots
+    previous_list=vacant_lots.copy()
+    db_ref=database.collection(coll).document(doc)
     for i, position in enumerate(position_list):
         x, y = position
-        cropped_img = image[y:y+height, x:x+width]
+        color=(0,255,0)
+        thickness=3
+        vacant_lots[i]=True
+        # cropped_img = image[y:y+height, x:x+width]
         # add detection code here
-
+        for box in confident_boxes:
+            if x<box[0]<x+width and y<box[1]<y+height:
+                color=(0,0,255)
+                thickness=3
+                vacant_lots[i]=False
+                # cv.rectangle(image, (x,y),(x,+),(255,0,0), 5)
+            
         cv.rectangle(image, position,
-                     (position[0]+width, position[1]+height), (0, 255, 0), 3)
+                     (position[0]+width, position[1]+height), color, thickness)
+        
+        if vacant_lots!=previous_list:
+            previous_list=vacant_lots.copy()
+            db_ref.update({'lot':vacant_lots})
+            print("updated")
+   
+
 
 
 def monitor():
@@ -105,6 +162,7 @@ def monitor():
     global position_list
     global vacant_lots
     global width, height
+    global class_names
     # retrieve values needed from database
     print("Which parking lot type would you like to monitor?")
     collections = database.collections()
@@ -134,15 +192,41 @@ def monitor():
     height = parking_lot_info["height"]
     # access camera and check lot
     # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(0)
+    cap = cv.VideoCapture(1)
+    wht=320
     if not cap.isOpened():
         print("Error opening camera")
         exit()
+    #yolov3 config 
+    class_names=['Car','Motorcycle']
+    modelConfiguration = './ParkingLotManager/yolov3/yolov3-custom.cfg'
+    modelWeights='./ParkingLotManager/yolov3/yolov3-custom_last.weights'
+    net= cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
+    net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
+    net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
+    #image needs to be converted to blob
     while True:
         flag, img = cap.read()
-        checkParkingSpaces(img, width, height, position_list)
+
+        #convert image to blob
+        blob=cv.dnn.blobFromImage(img, 1/255, (wht,wht),[0,0,0],1,crop=False)
+        net.setInput(blob) 
+
+        layerNames=net.getLayerNames()
+        
+
+        outputNames=[layerNames[i-1] for i in net.getUnconnectedOutLayers()]
+        
+        outputs=net.forward(outputNames) #list of outputs
+        # print(outputs[0].shape)
+        # print(outputs[1].shape)
+        # print(outputs[2].shape)
+       
+        conf_box=findObjects(outputs, img)
+        checkParkingSpaces(img, width, height, position_list, conf_box, collection_choice, doc_choice)
         cv.imshow("Monitor feed", img)
-        k = cv.waitKey(100)
+        
+        k = cv.waitKey(10)
         if k == ord('q'):
             cv.destroyAllWindows()
             break
@@ -175,6 +259,7 @@ def edit():
         position_list.append(
             (parking_lot_info["x"][i], parking_lot_info["y"][i]))
     vacant_lots = parking_lot_info["lot"]
+    print(vacant_lots)
     width = parking_lot_info["width"]
     height = parking_lot_info["height"]
     sample_images = os.listdir("./ParkingLotManager/Samples")
@@ -212,7 +297,11 @@ def create():
     global width
     global height
     global position_list
+    global sample_points
     position_list=[]
+    sample_points=[]
+    width=0
+    height=0
     print("What type of parking lot do you want to create?")
     print("1.Car\n2.Motorcycle/Scooter")
     satisfied = False
