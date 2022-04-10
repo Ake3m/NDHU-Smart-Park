@@ -429,7 +429,19 @@ def main():
     global vacant_lots 
     global previous_list 
     global clas_names 
-    sg.theme('Green')
+    #setting the theme
+    sg.LOOK_AND_FEEL_TABLE['custom_theme'] = {'BACKGROUND': '#4CC18A',
+                                        'TEXT': '#000',
+                                        'INPUT': '#339966',
+                                        'TEXT_INPUT': '#000000',
+                                        'SCROLL': '#99CC99',
+                                        'BUTTON': ('#000', '#12A460'),
+                                        'PROGRESS': ('#D1826B', '#CC8019'),
+                                        'BORDER': 2, 'SLIDER_DEPTH': 0, 
+                                        'PROGRESS_DEPTH': 0, }
+
+    # sg.theme('Green')
+    sg.theme('custom_theme')
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
         sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')], [sg.Button('Edit Parking Lot', key='Edit')], [sg.Button('Exit')]]
