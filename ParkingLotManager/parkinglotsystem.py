@@ -286,11 +286,14 @@ def edit():
     while True:
         events, values = editWindow.read()
         if events == sg.WIN_CLOSED:
+            close=True
             break
         if events == 'Next':
             doc_choice = values['lot'][0]
             break
     editWindow.close()
+    if close == True: 
+        return
     parking_lot_info = database.collection(collection_choice).document(
         doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
     for i in range(len(parking_lot_info["x"])):
@@ -410,15 +413,47 @@ def create():
     sg.popup_ok('Parking lot successfully created.')
 
 def main():
+    global drawing
+    global ix
+    global iy 
+    global ex
+    global ey
+    global sample_img 
+    global imgCopy 
+    global sample_points
+    global position_list 
+    global width
+    global height
+    global lot_names 
+    global lot_types 
+    global vacant_lots 
+    global previous_list 
+    global clas_names 
     sg.theme('Green')
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
         sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')], [sg.Button('Edit Parking Lot', key='Edit')], [sg.Button('Exit')]]
 
     main_window = sg.Window(
-        'NDHU Smart-Park', layout=[home_layout], margins=(100, 50), element_justification='c')
+        'NDHU Smart-Park', layout=[home_layout], margins=(200, 50), element_justification='c')
 
     while True:
+        drawing = False
+        ix = 0  # initial x
+        iy = 0  # initial y
+        ex = 0  # ending x
+        ey = 0  # ending y
+        sample_img = ""
+        imgCopy = ""
+        sample_points = []  # list holding the sample points
+        position_list = []  # list holding the position of each lot
+        width = 0
+        height = 0
+        lot_names = []
+        lot_types = []
+        vacant_lots = []
+        previous_list = []
+        clas_names = []
         event, values = main_window.read()
         if event == 'Monitor':
             print('Monitor')
