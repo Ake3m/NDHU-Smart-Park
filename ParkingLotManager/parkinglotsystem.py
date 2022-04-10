@@ -164,7 +164,7 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
             db_ref.update({'lot': vacant_lots})
             print("updated")
 
-def monitor2():
+def monitor():
     global lot_types
     global lot_names
     global position_list
@@ -256,85 +256,7 @@ def monitor2():
             cv.destroyAllWindows()
             break
 
-
-def monitor():
-    global lot_types
-    global lot_names
-    global position_list
-    global vacant_lots
-    global width, height
-    global class_names
-    # retrieve values needed from database
-    print("Which parking lot type would you like to monitor?")
-    collections = database.collections()
-    counter = 1
-    lot_types = []
-    for collection in collections:
-        lot_types.append(collection.id)
-        print("{}.{}".format(counter, collection.id))
-        counter += 1
-    collection_choice = lot_types[int(input())-1]
-    print("Which Parking Lot would you like to monitor?")
-    documents = database.collection(collection_choice).stream()
-    counter = 1
-    for doc in documents:
-        lot_names.append(doc.id)
-        print("{}.{}".format(counter, doc.id))
-        counter += 1
-    doc_choice = lot_names[int(input())-1]
-
-    parking_lot_info = database.collection(collection_choice).document(
-        doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
-    for i in range(len(parking_lot_info["x"])):
-        position_list.append(
-            [parking_lot_info["x"][i], parking_lot_info["y"][i]])
-    vacant_lots = parking_lot_info["lot"]
-    width = parking_lot_info["width"]
-    height = parking_lot_info["height"]
-    # access camera and check lot
-    # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(1)
-    wht = 320
-    if not cap.isOpened():
-        print("Error opening camera")
-        exit()
-    # yolov3 config
-    class_names = ['Car', 'Motorcycle']
-    modelConfiguration = './ParkingLotManager/yolov3/yolov3-custom.cfg'
-    modelWeights = './ParkingLotManager/yolov3/yolov3-custom_last.weights'
-    net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
-    net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
-    net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
-    # image needs to be converted to blob
-    while True:
-        flag, img = cap.read()
-
-        # convert image to blob
-        blob = cv.dnn.blobFromImage(
-            img, 1/255, (wht, wht), [0, 0, 0], 1, crop=False)
-        net.setInput(blob)
-
-        layerNames = net.getLayerNames()
-
-        outputNames = [layerNames[i-1] for i in net.getUnconnectedOutLayers()]
-
-        outputs = net.forward(outputNames)  # list of outputs
-        # print(outputs[0].shape)
-        # print(outputs[1].shape)
-        # print(outputs[2].shape)
-
-        conf_box = findObjects(outputs, img)
-        checkParkingSpaces(img, width, height, position_list,
-                           conf_box, collection_choice, doc_choice)
-        cv.imshow("Monitor feed", img)
-
-        k = cv.waitKey(10)
-        if k == ord('q'):
-            cv.destroyAllWindows()
-            break
-
-
-def edit2():
+def edit():
     global width, height, position_list
     close = False
     collections = database.collections()
@@ -404,68 +326,7 @@ def edit2():
     })
     sg.popup_ok('Information successfully updated')
 
-
-
-def edit():
-    global width, height, position_list
-    # retrieve values needed from database
-    print("Which parking lot type would you like to edit?")
-    collections = database.collections()
-    counter = 1
-    lot_types = []
-    for collection in collections:
-        lot_types.append(collection.id)
-        print("{}.{}".format(counter, collection.id))
-        counter += 1
-    collection_choice = lot_types[int(input())-1]
-    print("Which Parking Lot would you like to edit?")
-    documents = database.collection(collection_choice).stream()
-    counter = 1
-    for doc in documents:
-        lot_names.append(doc.id)
-        print("{}.{}".format(counter, doc.id))
-        counter += 1
-    doc_choice = lot_names[int(input())-1]
-
-    parking_lot_info = database.collection(collection_choice).document(
-        doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
-    for i in range(len(parking_lot_info["x"])):
-        position_list.append(
-            (parking_lot_info["x"][i], parking_lot_info["y"][i]))
-    vacant_lots = parking_lot_info["lot"]
-    print(vacant_lots)
-    width = parking_lot_info["width"]
-    height = parking_lot_info["height"]
-    sample_images = os.listdir("./ParkingLotManager/Samples")
-    while True:
-        sample_img = cv.imread(
-            "./ParkingLotManager/Samples/{}".format(parking_lot_info["imgURL"]))
-        for position in position_list:
-            cv.rectangle(sample_img, tuple(
-                position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
-        cv.imshow("Outline Parking Lot", sample_img)
-        cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
-        k = cv.waitKey(1)
-        if k == ord('s'):
-            cv.destroyAllWindows()
-            break
-    parking_lot_updated_info = database.collection(collection_choice).document(
-        doc_choice)
-    x_positions = [position[0] for position in position_list]
-    y_positions = [position[1] for position in position_list]
-    vacant_lots = [True for lot in position_list]
-    print("Enter updated number of lots per row")
-    lotsPerRow = int(input())
-    parking_lot_updated_info.update({
-        "x": x_positions,
-        "y": y_positions,
-        "lot": vacant_lots,
-        "lotsPerRow": lotsPerRow
-    })
-    print("Information successfully updated")
-
-
-def create2():
+def create():
     global sample_img
     global imgCopy
     global width
@@ -548,92 +409,6 @@ def create2():
         parkinglot_name).set(data)
     sg.popup_ok('Parking lot successfully created.')
 
-
-def create():
-    global sample_img
-    global imgCopy
-    global width
-    global height
-    global position_list
-    global sample_points
-    position_list = []
-    sample_points = []
-    width = 0
-    height = 0
-    print("What type of parking lot do you want to create?")
-    print("1.Car\n2.Motorcycle/Scooter")
-    satisfied = False
-    parkinglot_type = ""
-    while not satisfied:
-        choice = int(input())
-        if choice == 1 or choice == 2:
-            if choice == 1:
-                parkinglot_type = "Car"
-            else:
-                parkinglot_type = "Scooter"
-            satisfied = True
-        else:
-            print("Invalid input. Please try again.")
-    print("What would you like to name this parking lot?")
-    parkinglot_name = input()
-    print("In order to create a parking lot, perform the following steps.")
-    print("1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.")
-    print("Is the sample image already in the folder? (Y/N)")
-    selectPhoto = True
-    ans = input()
-    if ans == 'N' or ans == 'n' or ans == 'No' or ans == 'no':
-        print("Please place the sample image in the folder then try again.")
-    elif ans == 'Y' or ans == 'y' or ans == 'Yes' or ans == 'yes':
-        sample_images = os.listdir("./ParkingLotManager/Samples")
-        print("Please select an image from the folder")
-        counter = 1
-        for sample in sample_images:
-            print("{}.{}".format(counter, sample.capitalize()))
-            counter += 1
-        selection = int(input())
-        selected_img = sample_images[selection-1]
-        drawSample(selected_img)
-        width = sample_points[2]-sample_points[0]
-        height = sample_points[3]-sample_points[1]
-        print("Left click the top left corner of each lot to outline")
-        print("Right click anywhere in the outline to remove it.")
-        print("Press \'s\' to save.")
-        while True:
-            sample_img = cv.imread(
-                "./ParkingLotManager/Samples/{}".format(selected_img))
-            for position in position_list:
-                cv.rectangle(sample_img, tuple(
-                    position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
-            cv.imshow("Outline Parking Lot", sample_img)
-            cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
-            k = cv.waitKey(1)
-            if k == ord('s'):
-                cv.destroyAllWindows()
-                break
-        print("Lastly, how many lots per row are there?")
-        lots_per_row = int(input())
-        x_positions = [position[0] for position in position_list]
-        y_positions = [position[1] for position in position_list]
-        vacant_lots = [True for lot in position_list]
-        data = {
-            "name": parkinglot_name,
-            "capacity": len(vacant_lots),
-            "x": x_positions,
-            "y": y_positions,
-            "lot": vacant_lots,
-            "lotsPerRow": lots_per_row,
-            "width": width,
-            "height": height,
-            "imgURL": selected_img,
-            "tileColor": generateHexColor(),
-
-        }
-
-        db_ref = database.collection(parkinglot_type).document(
-            parkinglot_name).set(data)
-        print("Parking lot sucessfully added to database.")
-
-
 def main():
     sg.theme('Green')
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
@@ -648,40 +423,21 @@ def main():
         if event == 'Monitor':
             print('Monitor')
             main_window.Hide()
-            monitor2()
+            monitor()
             main_window.un_hide()
         elif event == 'Create':
             main_window.Hide()
-            create2()
+            create()
             main_window.un_hide()
         elif event == 'Edit':
             print('Edit')
             main_window.Hide()
-            edit2()
+            edit()
             main_window.un_hide()
         elif event == sg.WIN_CLOSED or event == 'Exit':
             break
 
     main_window.close()
-
-    # exit_option = False
-    # while(not exit_option):
-    #     print("Welcome to NDHU Smart-Park System.")
-    #     print("What would you like to do?")
-    #     print("1. Monitor A Parking Lot.\n2. Create Parking Lot.\n3. Edit Existing Parking Lot.\n4. Exit")
-    #     choice = int(input())
-    #     if choice == 1:
-    #         monitor()
-    #     elif choice == 2:
-    #         create()
-    #     elif choice == 3:
-    #         edit()
-    #     elif choice == 4:
-    #         print("Thank you. Have a nice day")
-    #         exit_option = True
-    #     else:
-    #         print("Invalid input. Please try again")
-
 
 if __name__ == '__main__':
     main()
