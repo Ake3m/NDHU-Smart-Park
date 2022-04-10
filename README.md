@@ -6,4 +6,5 @@ Smart Parking project to be used as a 3rd year project at the National Dong Hwa 
   3. pip install numpy
   4. pip install firebase-admin
   5. pip install firebase
+  6. pip install PySimpleGUI
   
