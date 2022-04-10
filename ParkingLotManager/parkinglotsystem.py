@@ -82,8 +82,8 @@ def drawSample(selected):
     print("Drag the mouse over the area of 1 parking space.")
     print("If you are satisfied, press \'s\' to save sample.")
     print("if you want to redo, press \'r\'.")
-    # imgCopy = cv.imread('./ParkingLotManager/Samples/{}'.format(selected), 1)
-    imgCopy=cv.imread(selected, 1)
+    imgCopy = cv.imread('./ParkingLotManager/Samples/{}'.format(selected), 1)
+    # imgCopy = cv.imread(selected, 1)
     while True:
         cv.imshow("Draw sample", imgCopy)
         cv.setMouseCallback("Draw sample", draw)
@@ -241,6 +241,78 @@ def monitor():
             break
 
 
+def edit2():
+    global width, height, position_list
+    close = False
+    collections = database.collections()
+    lot_types = [collection.id for collection in collections]
+    print(collections)
+    edit_layout1 = [[sg.Text('Which parking Lot Type would you like to edit?')], [
+        sg.Combo(lot_types, key='choice'), sg.Button('Next', key='next')]]
+    editWindow = sg.Window('Select lot type', edit_layout1)
+    while True:
+        event, values = editWindow.read()
+        if event == sg.WIN_CLOSED:
+            close = True
+            break
+        if event == 'next' and values['choice'] != '':
+            collection_choice = values['choice']
+            break
+        else:
+            sg.popup_error('Please select a type')
+    editWindow.close()
+    if close == True:
+        return
+    documents = database.collection(collection_choice).stream()
+    lot_names = [doc.id for doc in documents]
+    edit_layout2 = [[sg.Text('Select the parking lot you wish to edit')], [sg.Listbox(
+        lot_names, size=(50, 6), key='lot')], [sg.Button('Next', key='Next')]]
+    editWindow = sg.Window('Select Parking Lot', edit_layout2)
+    while True:
+        events, values = editWindow.read()
+        if events == sg.WIN_CLOSED:
+            break
+        if events == 'Next':
+            doc_choice = values['lot'][0]
+            break
+    editWindow.close()
+    parking_lot_info = database.collection(collection_choice).document(
+        doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
+    for i in range(len(parking_lot_info["x"])):
+        position_list.append((parking_lot_info["x"][i], parking_lot_info["y"][i]))
+    vacant_lots = parking_lot_info["lot"]
+    print(vacant_lots)
+    width = parking_lot_info["width"]
+    height = parking_lot_info["height"]
+    sg.popup_ok('After making the appropriate changes, press \'s\' to save')
+    while True:
+        sample_img = cv.imread(
+            "./ParkingLotManager/Samples/{}".format(parking_lot_info["imgURL"]))
+        for position in position_list:
+            cv.rectangle(sample_img, tuple(
+                position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
+        cv.imshow("Outline Parking Lot", sample_img)
+        cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
+        k = cv.waitKey(1)
+        if k == ord('s'):
+            cv.destroyAllWindows()
+            break
+    parking_lot_updated_info = database.collection(collection_choice).document(
+        doc_choice)
+    x_positions = [position[0] for position in position_list]
+    y_positions = [position[1] for position in position_list]
+    vacant_lots = [True for lot in position_list]
+    lotsPerRow=int(sg.popup_get_text('Lastly, how many rows per lot?'))
+    parking_lot_updated_info.update({
+        "x": x_positions,
+        "y": y_positions,
+        "lot": vacant_lots,
+        "lotsPerRow": lotsPerRow
+    })
+    sg.popup_ok('Information successfully updated')
+
+
+
 def edit():
     global width, height, position_list
     # retrieve values needed from database
@@ -300,11 +372,6 @@ def edit():
     print("Information successfully updated")
 
 
-def test():
-    layout = [[sg.Text('Test')]]
-    win2 = sg.Window('test', layout=layout).read()
-
-
 def create2():
     global sample_img
     global imgCopy
@@ -312,31 +379,34 @@ def create2():
     global height
     global position_list
     global sample_points
-    parkinglot_type=''
-    parkinglot_name=''
+    parkinglot_type = ''
+    parkinglot_name = ''
+    close=False
     create_layout = [[sg.Text('What type of parking lot do you want to create?')],
-    [sg.Radio('Car', 'TYPE', default=True, key='car'),
-        sg.Radio('Scooter', 'TYPE',key='scooter')],
-        [sg.Text('Parking Lot Name:'),
-        sg.Input(key='lot_name')], [sg.Text('In order to create a parking lot, perform the following steps:')],
-        [sg.Text('1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.')],
-        [sg.Text('Select the sample image of the parking lot')],
-        [sg.Input(key='image_path'), sg.FileBrowse()],
-        [sg.Button('Cancel', key='cancel'),
-        sg.Button('Next', key='next')]]
+                     [sg.Radio('Car', 'TYPE', default=True, key='car'),
+                      sg.Radio('Scooter', 'TYPE', key='scooter')],
+                     [sg.Text('Parking Lot Name:'),
+                      sg.Input(key='lot_name')], [sg.Text('In order to create a parking lot, perform the following steps:')],
+                     [sg.Text('1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.')],
+                     [sg.Text('Select the sample image of the parking lot')],
+                     [sg.Input(key='image_path'), sg.FileBrowse()],
+                     [sg.Button('Cancel', key='cancel'),
+                      sg.Button('Next', key='next')]]
     createWindow = sg.Window('Create Parking Lot', layout=create_layout)
 
     while True:
         event, values = createWindow.read()
-        if event=='cancel'or event == sg.WIN_CLOSED:
+        if event == 'cancel' or event == sg.WIN_CLOSED:
+            close=True
             break
-        if event=='next' and values['lot_name']!='' and values['image_path']!='':
-            selected_img=values['image_path'];
-            parkinglot_name=values['lot_name']
-            if values['car']==True:
-                parkinglot_type='Car'
-            elif values['scooter']==True:
-                parkinglot_type="Scooter"
+        if event == 'next' and values['lot_name'] != '' and values['image_path'] != '':
+            selected_img = str(Path(values['image_path']).name)
+            print(selected_img)
+            parkinglot_name = values['lot_name']
+            if values['car'] == True:
+                parkinglot_type = 'Car'
+            elif values['scooter'] == True:
+                parkinglot_type = "Scooter"
             parkinglot_type
             print(parkinglot_type)
             drawSample(selected_img)
@@ -345,11 +415,14 @@ def create2():
             sg.popup_ok('Please ensure that Name and Image Path are filled.')
 
     createWindow.close()
-    createWindow=sg.popup_ok('Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
+    if close==True:
+        return
+    createWindow = sg.popup_ok(
+        'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
     width = sample_points[2]-sample_points[0]
     height = sample_points[3]-sample_points[1]
     while True:
-        sample_img = cv.imread(selected_img)
+        sample_img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
         for position in position_list:
             cv.rectangle(sample_img, tuple(
                 position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
@@ -359,7 +432,8 @@ def create2():
         if k == ord('s'):
             cv.destroyAllWindows()
             break
-    lots_per_row = int(sg.popup_get_text(title='Almost Done', message='Lastly, how many lots per row are there?'))
+    lots_per_row = int(sg.popup_get_text(title='Almost Done',
+                       message='Lastly, how many lots per row are there?'))
     x_positions = [position[0] for position in position_list]
     y_positions = [position[1] for position in position_list]
     vacant_lots = [True for lot in position_list]
@@ -380,8 +454,6 @@ def create2():
     db_ref = database.collection(parkinglot_type).document(
         parkinglot_name).set(data)
     sg.popup_ok('Parking lot successfully created.')
-        
-
 
 
 def create():
@@ -488,6 +560,9 @@ def main():
             main_window.un_hide()
         elif event == 'Edit':
             print('Edit')
+            main_window.Hide()
+            edit2()
+            main_window.un_hide()
         elif event == sg.WIN_CLOSED or event == 'Exit':
             break
 
