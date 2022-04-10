@@ -79,6 +79,7 @@ def outlineParkingSpace(events, x, y, flags, parameters):
 
 def drawSample(selected):
     global imgCopy
+    sg.popup_ok('Drag over 1 parking space to collect a sample. Press \'s\' to save the sample and \'r\' to redo it.')
     print("Drag the mouse over the area of 1 parking space.")
     print("If you are satisfied, press \'s\' to save sample.")
     print("if you want to redo, press \'r\'.")
@@ -162,6 +163,98 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
             previous_list = vacant_lots.copy()
             db_ref.update({'lot': vacant_lots})
             print("updated")
+
+def monitor2():
+    global lot_types
+    global lot_names
+    global position_list
+    global vacant_lots
+    global width, height
+    global class_names
+
+    close=False
+    collections = database.collections()
+    lot_types = [collection.id for collection in collections]
+    print(collections)
+    monitor_layout1 = [[sg.Text('Which parking Lot Type would you like to monitor?')], [
+        sg.Combo(lot_types, key='choice'), sg.Button('Next', key='next')]]
+    monitorWindow = sg.Window('Select lot type', monitor_layout1)
+    while True:
+        event, values = monitorWindow.read()
+        if event == sg.WIN_CLOSED:
+            close = True
+            break
+        if event == 'next' and values['choice'] != '':
+            collection_choice = values['choice']
+            break
+        else:
+            sg.popup_error('Please select a type')
+    monitorWindow.close()
+    if close == True:
+        return
+    documents = database.collection(collection_choice).stream()
+    lot_names = [doc.id for doc in documents]
+    monitor_layout2 = [[sg.Text('Select the parking lot you wish to monitor')], [sg.Listbox(
+        lot_names, size=(50, 6), key='lot')], [sg.Button('Next', key='Next')]]
+    monitorWindow = sg.Window('Select Parking Lot', monitor_layout2)
+    while True:
+        events, values = monitorWindow.read()
+        if events == sg.WIN_CLOSED:
+            break
+        if events == 'Next':
+            doc_choice = values['lot'][0]
+            break
+    monitorWindow.close()
+    parking_lot_info = database.collection(collection_choice).document(
+        doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
+    for i in range(len(parking_lot_info["x"])):
+        position_list.append(
+            [parking_lot_info["x"][i], parking_lot_info["y"][i]])
+    vacant_lots = parking_lot_info["lot"]
+    width = parking_lot_info["width"]
+    height = parking_lot_info["height"]
+    sg.popup_ok('The monitor feed will appear. Click \'q\' in order to end monitor session.')
+    # access camera and check lot
+    # change to 0 for laptop webcam, 1 for external webcam
+    cap = cv.VideoCapture(0)
+    wht = 320
+    if not cap.isOpened():
+        print("Error opening camera")
+        exit()
+    # yolov3 config
+    class_names = ['Car', 'Motorcycle']
+    modelConfiguration = './ParkingLotManager/yolov3/yolov3-custom.cfg'
+    modelWeights = './ParkingLotManager/yolov3/yolov3-custom_last.weights'
+    net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
+    net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
+    net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
+    # image needs to be converted to blob
+    while True:
+        flag, img = cap.read()
+
+        # convert image to blob
+        blob = cv.dnn.blobFromImage(
+            img, 1/255, (wht, wht), [0, 0, 0], 1, crop=False)
+        net.setInput(blob)
+
+        layerNames = net.getLayerNames()
+
+        outputNames = [layerNames[i-1] for i in net.getUnconnectedOutLayers()]
+
+        outputs = net.forward(outputNames)  # list of outputs
+        # print(outputs[0].shape)
+        # print(outputs[1].shape)
+        # print(outputs[2].shape)
+
+        conf_box = findObjects(outputs, img)
+        checkParkingSpaces(img, width, height, position_list,
+                           conf_box, collection_choice, doc_choice)
+        cv.imshow("Monitor feed", img)
+
+        k = cv.waitKey(10)
+        if k == ord('q'):
+            cv.destroyAllWindows()
+            break
 
 
 def monitor():
@@ -409,7 +502,6 @@ def create2():
                 parkinglot_type = "Scooter"
             parkinglot_type
             print(parkinglot_type)
-            drawSample(selected_img)
             break
         else:
             sg.popup_ok('Please ensure that Name and Image Path are filled.')
@@ -417,6 +509,7 @@ def create2():
     createWindow.close()
     if close==True:
         return
+    drawSample(selected_img)
     createWindow = sg.popup_ok(
         'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
     width = sample_points[2]-sample_points[0]
@@ -554,6 +647,9 @@ def main():
         event, values = main_window.read()
         if event == 'Monitor':
             print('Monitor')
+            main_window.Hide()
+            monitor2()
+            main_window.un_hide()
         elif event == 'Create':
             main_window.Hide()
             create2()
