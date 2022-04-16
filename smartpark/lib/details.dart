@@ -80,7 +80,11 @@ class _DetailViewState extends State<DetailView> {
             ),
             Text(
               '${name[0].toUpperCase()}${name.substring(1)} Parking Lot',
-              style: const TextStyle(color: Colors.white, fontSize: 20),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+              ),
+              textAlign: TextAlign.center,
             ),
             Padding(
                 padding: const EdgeInsets.all(5),
