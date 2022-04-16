@@ -52,10 +52,20 @@ class Locations extends StatelessWidget {
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) {
-              return const Text('Something went wrong');
+              return const Center(
+                  child: Text('Something went wrong',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20)));
             }
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Text('Loading..');
+              return const Center(
+                  child: Text('Loading',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20)));
             }
             dbData = snapshot.data!.docs.map((doc) => doc.data()).toList();
             if (LocationTile.parkingLocations.length != 4) {
@@ -97,7 +107,7 @@ class Locations extends StatelessWidget {
                               border: Border.all(
                                   color: Colors.white,
                                   style: BorderStyle.solid,
-                                  width: 4)),
+                                  width: 2)),
 
                           // color: LocationTile.parkingLocations[index].tileColor,
                           child: Column(
@@ -111,6 +121,7 @@ class Locations extends StatelessWidget {
                                       color: Colors.white,
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold),
+                                  textAlign: TextAlign.center,
                                 ),
                                 Expanded(
                                   child: Image.asset(
