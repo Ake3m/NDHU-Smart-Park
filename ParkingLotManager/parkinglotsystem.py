@@ -9,7 +9,8 @@ from firebase_admin import firestore
 from firebase_admin import storage
 import random
 import PySimpleGUI as sg
-
+from datetime import date
+import time
 
 # GLOBAL VARIABLES SECTION
 drawing = False
@@ -30,8 +31,8 @@ previous_list = []
 clas_names = []
 
 
-confidence_threshold = 0.2
-nms_threshold = 0.3
+confidence_threshold = 0.5
+nms_threshold = 0.3 #originally set to 0.3
 
 # FIREBASE CONFIGURATION SETUP
 cred = credentials.Certificate("./serviceAccountKey.json")
@@ -84,6 +85,7 @@ def drawSample(selected):
     print("If you are satisfied, press \'s\' to save sample.")
     print("if you want to redo, press \'r\'.")
     imgCopy = cv.imread('./ParkingLotManager/Samples/{}'.format(selected), 1)
+    imgCopy=cv.resize(imgCopy, (640,480))
     # imgCopy = cv.imread(selected, 1)
     while True:
         cv.imshow("Draw sample", imgCopy)
@@ -95,6 +97,7 @@ def drawSample(selected):
         elif k == ord('r'):
             imgCopy = cv.imread(
                 './ParkingLotManager/Samples/{}'.format(selected), 1)
+            imgCopy=cv.resize(imgCopy, (640,480))
     cv.destroyAllWindows()
 
 
@@ -145,14 +148,14 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
     for i, position in enumerate(position_list):
         x, y = position
         color = (0, 255, 0)
-        thickness = 3
+        thickness = 1
         vacant_lots[i] = True
         # cropped_img = image[y:y+height, x:x+width]
         # add detection code here
         for box in confident_boxes:
             if x < box[0] < x+width and y < box[1] < y+height:
                 color = (0, 0, 255)
-                thickness = 3
+                thickness = 1
                 vacant_lots[i] = False
                 # cv.rectangle(image, (x,y),(x,+),(255,0,0), 5)
 
@@ -216,7 +219,9 @@ def monitor():
     sg.popup_ok('The monitor feed will appear. Click \'q\' in order to end monitor session.')
     # access camera and check lot
     # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(0)
+    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
+    cap.set(3,640)
+    cap.set(4, 480)
     wht = 320
     if not cap.isOpened():
         print("Error opening camera")
@@ -380,6 +385,7 @@ def create():
     height = sample_points[3]-sample_points[1]
     while True:
         sample_img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
+        sample_img=cv.resize(sample_img, (650,480))
         for position in position_list:
             cv.rectangle(sample_img, tuple(
                 position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
@@ -412,6 +418,28 @@ def create():
         parkinglot_name).set(data)
     sg.popup_ok('Parking lot successfully created.')
 
+def capture():
+    sg.popup_ok("Images are stored in the Samples folder.")
+    img_name=time.ctime(time.time()).replace(" ", "_").replace(":", "_")
+    print(img_name)
+    cap=cv.VideoCapture(0, cv.CAP_DSHOW)
+    cap.set(3,640)
+    cap.set(4,480)
+    if not cap.isOpened():
+        sg.popup_error("Error opening camera")
+        return
+    sg.popup_ok('Press \'s\' to save the picture.')
+    while True:
+        flag, img=cap.read()
+        cv.imshow('Take a picture', img)
+        
+        k=cv.waitKey(10)
+        #TODO add a way to retry
+        if k==ord('s'):
+            cv.imwrite("./ParkingLotManager/Samples/{}.jpg".format(img_name),img)
+            cv.destroyAllWindows()
+            break
+    
 def main():
     global drawing
     global ix
@@ -444,7 +472,9 @@ def main():
     sg.theme('custom_theme')
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
-        sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')], [sg.Button('Edit Parking Lot', key='Edit')], [sg.Button('Exit')]]
+        sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')],
+        [sg.Button('Take a picture', key='Take')],
+          [sg.Button('Exit')]]
 
     main_window = sg.Window(
         'NDHU Smart-Park', layout=[home_layout], margins=(200, 50), element_justification='c')
@@ -476,10 +506,9 @@ def main():
             main_window.Hide()
             create()
             main_window.un_hide()
-        elif event == 'Edit':
-            print('Edit')
+        elif event =='Take':
             main_window.Hide()
-            edit()
+            capture()
             main_window.un_hide()
         elif event == sg.WIN_CLOSED or event == 'Exit':
             break
