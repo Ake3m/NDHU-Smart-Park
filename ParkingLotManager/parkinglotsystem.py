@@ -41,7 +41,7 @@ database = firestore.client()
 
 
 
-def automatic_detection():
+def automatic_detection(img):
     pass
 
 def generateHexColor():
