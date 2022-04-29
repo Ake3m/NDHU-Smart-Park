@@ -40,6 +40,10 @@ initialize_app(cred, {'storageBucket': 'smart-park-13acd.appspot.com'})
 database = firestore.client()
 
 
+
+def automatic_detection():
+    pass
+
 def generateHexColor():
     random_number = random.randint(0, 16777215)
     hex_number = str(hex(random_number))
@@ -378,25 +382,25 @@ def create():
     createWindow.close()
     if close==True:
         return
-    drawSample(selected_img)
-    createWindow = sg.popup_ok(
-        'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
-    width = sample_points[2]-sample_points[0]
-    height = sample_points[3]-sample_points[1]
-    while True:
-        sample_img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
-        sample_img=cv.resize(sample_img, (650,480))
-        for position in position_list:
-            cv.rectangle(sample_img, tuple(
-                position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
-        cv.imshow("Outline Parking Lot", sample_img)
-        cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
-        k = cv.waitKey(1)
-        if k == ord('s'):
-            cv.destroyAllWindows()
-            break
-    lots_per_row = int(sg.popup_get_text(title='Almost Done',
-                       message='Lastly, how many lots per row are there?'))
+    # drawSample(selected_img)
+    # createWindow = sg.popup_ok(
+    #     'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
+    # width = sample_points[2]-sample_points[0]
+    # height = sample_points[3]-sample_points[1]
+    # while True:
+    #     sample_img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
+    #     sample_img=cv.resize(sample_img, (650,480))
+    #     for position in position_list:
+    #         cv.rectangle(sample_img, tuple(
+    #             position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
+    #     cv.imshow("Outline Parking Lot", sample_img)
+    #     cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
+    #     k = cv.waitKey(1)
+    #     if k == ord('s'):
+    #         cv.destroyAllWindows()
+    #         break
+    # lots_per_row = int(sg.popup_get_text(title='Almost Done',
+    #                    message='Lastly, how many lots per row are there?'))
     x_positions = [position[0] for position in position_list]
     y_positions = [position[1] for position in position_list]
     vacant_lots = [True for lot in position_list]
