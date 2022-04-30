@@ -30,18 +30,18 @@ lot_types = []
 vacant_lots = []
 previous_list = []
 clas_names = []
-top_left_x=[]
-top_left_y=[]
-top_rights_x=[]
-top_rights_y=[]
-bottom_lefts_x=[]
-bottom_lefts_y=[]
-bottom_rights_x=[]
-bottom_rights_y=[]
+top_left_x = []
+top_left_y = []
+top_rights_x = []
+top_rights_y = []
+bottom_lefts_x = []
+bottom_lefts_y = []
+bottom_rights_x = []
+bottom_rights_y = []
 
 
 confidence_threshold = 0.2
-nms_threshold = 0.3 #originally set to 0.3
+nms_threshold = 0.3  # originally set to 0.3
 
 # FIREBASE CONFIGURATION SETUP - DO NOT TOUCH
 cred = credentials.Certificate("./serviceAccountKey.json")
@@ -49,9 +49,9 @@ initialize_app(cred, {'storageBucket': 'smart-park-13acd.appspot.com'})
 database = firestore.client()
 
 
-
 def automatic_detection(img):
     pass
+
 
 def generateHexColor():
     random_number = random.randint(0, 16777215)
@@ -93,12 +93,13 @@ def outlineParkingSpace(events, x, y, flags, parameters):
 
 def drawSample(selected):
     global imgCopy
-    sg.popup_ok('Drag over 1 parking space to collect a sample. Press \'s\' to save the sample and \'r\' to redo it.')
+    sg.popup_ok(
+        'Drag over 1 parking space to collect a sample. Press \'s\' to save the sample and \'r\' to redo it.')
     print("Drag the mouse over the area of 1 parking space.")
     print("If you are satisfied, press \'s\' to save sample.")
     print("if you want to redo, press \'r\'.")
     imgCopy = cv.imread('./ParkingLotManager/Samples/{}'.format(selected), 1)
-    imgCopy=cv.resize(imgCopy, (640,480))
+    imgCopy = cv.resize(imgCopy, (640, 480))
     # imgCopy = cv.imread(selected, 1)
     while True:
         cv.imshow("Draw sample", imgCopy)
@@ -110,7 +111,7 @@ def drawSample(selected):
         elif k == ord('r'):
             imgCopy = cv.imread(
                 './ParkingLotManager/Samples/{}'.format(selected), 1)
-            imgCopy=cv.resize(imgCopy, (640,480))
+            imgCopy = cv.resize(imgCopy, (640, 480))
     cv.destroyAllWindows()
 
 
@@ -153,8 +154,15 @@ def findObjects(outputs, img):
 
     return confident_boxes
 
+
 def checkParkingSpacesAutomatic(image, points, confident_boxes, coll, doc):
-    pass
+    global previous_list, vacant_lots
+    previous_list = vacant_lots.copy()
+    db_ref = database.collection(coll).document(doc)
+    for point in points:
+         cv.polylines(image,[point],True,(0,255,0),2)
+
+
 def checkParkingSpaces(image, width, height, position_list, confident_boxes, coll, doc):
     global previous_list, vacant_lots
     previous_list = vacant_lots.copy()
@@ -181,6 +189,7 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
             db_ref.update({'lot': vacant_lots})
             print("updated")
 
+
 def monitor():
     global lot_types
     global lot_names
@@ -197,7 +206,7 @@ def monitor():
     global bottom_rights_x
     global bottom_rights_y
 
-    close=False
+    close = False
     collections = database.collections()
     lot_types = [collection.id for collection in collections]
     print(collections)
@@ -232,17 +241,38 @@ def monitor():
     monitorWindow.close()
     parking_lot_info = database.collection(collection_choice).document(
         doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
-    for i in range(len(parking_lot_info["x"])):
-        position_list.append(
-            [parking_lot_info["x"][i], parking_lot_info["y"][i]])
+    automatic_detection = parking_lot_info['automatic_detection']
+    if automatic_detection == True:
+        points = []
+        top_left_x = parking_lot_info['top_left_x']
+        top_left_y = parking_lot_info['top_left_y']
+        top_rights_x = parking_lot_info['top_rights_x']
+        top_rights_y = parking_lot_info['top_rights_y']
+        bottom_lefts_x = parking_lot_info['bottom_lefts_x']
+        bottom_lefts_y = parking_lot_info['bottom_lefts_y']
+        bottom_rights_x = parking_lot_info['bottom_rights_x']
+        bottom_rights_y = parking_lot_info['bottom_rights_y']
+
+        for i in range(len(top_left_x)):
+            points.append([[top_left_x[i], top_left_y[i]], [top_rights_x[i], top_rights_y[i]], [
+                            bottom_rights_x[i], bottom_rights_y[i]], [bottom_lefts_x[i], bottom_lefts_y[i]]])
+        
+        print(len(points))
+        print(points)
+        points=np.array(points, dtype=np.int32)
+    else:
+        for i in range(len(parking_lot_info["x"])):
+            position_list.append(
+                [parking_lot_info["x"][i], parking_lot_info["y"][i]])
     vacant_lots = parking_lot_info["lot"]
     width = parking_lot_info["width"]
     height = parking_lot_info["height"]
-    sg.popup_ok('The monitor feed will appear. Click \'q\' in order to end monitor session.')
+    sg.popup_ok(
+        'The monitor feed will appear. Click \'q\' in order to end monitor session.')
     # access camera and check lot
     # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
-    cap.set(3,640)
+    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+    cap.set(3, 640)
     cap.set(4, 480)
     wht = 320
     if not cap.isOpened():
@@ -274,14 +304,18 @@ def monitor():
         # print(outputs[2].shape)
 
         conf_box = findObjects(outputs, img)
-        checkParkingSpaces(img, width, height, position_list,
-                           conf_box, collection_choice, doc_choice)
+        if automatic_detection == True:
+            checkParkingSpacesAutomatic(img, points, conf_box, collection_choice, doc_choice)
+        else:
+            checkParkingSpaces(img, width, height, position_list,
+                               conf_box, collection_choice, doc_choice)
         cv.imshow("Monitor feed", img)
 
         k = cv.waitKey(10)
         if k == ord('q'):
             cv.destroyAllWindows()
             break
+
 
 def edit():
     global width, height, position_list
@@ -313,18 +347,19 @@ def edit():
     while True:
         events, values = editWindow.read()
         if events == sg.WIN_CLOSED:
-            close=True
+            close = True
             break
         if events == 'Next':
             doc_choice = values['lot'][0]
             break
     editWindow.close()
-    if close == True: 
+    if close == True:
         return
     parking_lot_info = database.collection(collection_choice).document(
         doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
     for i in range(len(parking_lot_info["x"])):
-        position_list.append((parking_lot_info["x"][i], parking_lot_info["y"][i]))
+        position_list.append(
+            (parking_lot_info["x"][i], parking_lot_info["y"][i]))
     vacant_lots = parking_lot_info["lot"]
     print(vacant_lots)
     width = parking_lot_info["width"]
@@ -347,7 +382,7 @@ def edit():
     x_positions = [position[0] for position in position_list]
     y_positions = [position[1] for position in position_list]
     vacant_lots = [True for lot in position_list]
-    lotsPerRow=int(sg.popup_get_text('Lastly, how many rows per lot?'))
+    lotsPerRow = int(sg.popup_get_text('Lastly, how many rows per lot?'))
     parking_lot_updated_info.update({
         "x": x_positions,
         "y": y_positions,
@@ -355,6 +390,7 @@ def edit():
         "lotsPerRow": lotsPerRow
     })
     sg.popup_ok('Information successfully updated')
+
 
 def create():
     global sample_img
@@ -373,19 +409,19 @@ def create():
     global bottom_rights_y
     parkinglot_type = ''
     parkinglot_name = ''
-    x_positions=[]
-    y_positions=[]
-    automatic_selection=False
-    close=False
+    x_positions = []
+    y_positions = []
+    automatic_selection = False
+    close = False
     create_layout = [[sg.Text('What type of parking lot do you want to create?')],
                      [sg.Radio('Car', 'TYPE', default=True, key='car'),
                       sg.Radio('Scooter', 'TYPE', key='scooter')],
                      [sg.Text('Parking Lot Name:'),
                       sg.Input(key='lot_name')], [sg.Text('In order to create a parking lot, perform the following steps:')],
                      [sg.Text('Manual Method:\n1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.')],
-                      [sg.Text('Would you like to try automatic outlining?')],
+                     [sg.Text('Would you like to try automatic outlining?')],
                      [sg.Radio('Yes', 'OUTLINE', key='yes'),
-                      sg.Radio('No', 'OUTLINE',default=True, key='no')],
+                      sg.Radio('No', 'OUTLINE', default=True, key='no')],
                      [sg.Text('Select the sample image of the parking lot')],
                      [sg.Input(key='image_path'), sg.FileBrowse()],
                      [sg.Button('Cancel', key='cancel'),
@@ -395,7 +431,7 @@ def create():
     while True:
         event, values = createWindow.read()
         if event == 'cancel' or event == sg.WIN_CLOSED:
-            close=True
+            close = True
             break
         if event == 'next' and values['lot_name'] != '' and values['image_path'] != '':
             selected_img = str(Path(values['image_path']).name)
@@ -405,22 +441,22 @@ def create():
                 parkinglot_type = 'Car'
             elif values['scooter'] == True:
                 parkinglot_type = "Scooter"
-            if values['yes']==True:
-                automatic_detection=True
-            elif values['no']==True:
-                automatic_detection=False
+            if values['yes'] == True:
+                automatic_detection = True
+            elif values['no'] == True:
+                automatic_detection = False
             break
         else:
             sg.popup_ok('Please ensure that Name and Image Path are filled.')
 
     createWindow.close()
-    if close==True:
+    if close == True:
         return
     print(automatic_detection)
-    if automatic_detection==False: #MANUAL SELECTION CODE
-        img=cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
-        img=cv.resize(img, (900,600))
-        
+    if automatic_detection == False:  # MANUAL SELECTION CODE
+        img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
+        img = cv.resize(img, (900, 600))
+
         # print(position_list)
         drawSample(selected_img)
         createWindow = sg.popup_ok(
@@ -428,8 +464,9 @@ def create():
         width = sample_points[2]-sample_points[0]
         height = sample_points[3]-sample_points[1]
         while True:
-            sample_img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
-            sample_img=cv.resize(sample_img, (650,480))
+            sample_img = cv.imread(
+                "./ParkingLotManager/Samples/{}".format(selected_img))
+            sample_img = cv.resize(sample_img, (650, 480))
             for position in position_list:
                 cv.rectangle(sample_img, tuple(
                     position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
@@ -440,20 +477,20 @@ def create():
                 cv.destroyAllWindows()
                 break
         lots_per_row = int(sg.popup_get_text(title='Almost Done',
-                        message='Lastly, how many lots per row are there?'))
+                                             message='Lastly, how many lots per row are there?'))
         x_positions = [position[0] for position in position_list]
         y_positions = [position[1] for position in position_list]
         vacant_lots = [True for lot in position_list]
-    else: # AUTOMATIC DETECTION
-        parking_lot_dict, lots_per_row=automate.outline(selected_img)
-        top_left_x=[]
-        top_left_y=[]
-        top_rights_x=[]
-        top_rights_y=[]
-        bottom_lefts_x=[]
-        bottom_lefts_y=[]
-        bottom_rights_x=[]
-        bottom_rights_y=[]
+    else:  # AUTOMATIC DETECTION
+        parking_lot_dict, lots_per_row = automate.outline(selected_img)
+        top_left_x = []
+        top_left_y = []
+        top_rights_x = []
+        top_rights_y = []
+        bottom_lefts_x = []
+        bottom_lefts_y = []
+        bottom_rights_x = []
+        bottom_rights_y = []
         for rows in parking_lot_dict.keys():
             for k in parking_lot_dict[rows]:
                 top_left_x.append(float(k[0][0]))
@@ -463,10 +500,9 @@ def create():
                 bottom_rights_x.append(float(k[2][0]))
                 bottom_rights_y.append(float(k[2][1]))
                 bottom_lefts_x.append(float(k[3][0]))
-                bottom_lefts_x.append(float(k[3][1]))
-        vacant_lots=[True for points in top_left_x]
-    
-    
+                bottom_lefts_y.append(float(k[3][1]))
+        vacant_lots = [True for points in top_left_x]
+
     data = {
         "name": parkinglot_name,
         "capacity": len(vacant_lots),
@@ -478,60 +514,63 @@ def create():
         "height": height,
         "imgURL": selected_img,
         "tileColor": generateHexColor(),
-        "top_left_x":top_left_x,
-        "top_left_y":top_left_y,
-        "top_rights_x":top_rights_x,
-        "top_rights_y":top_rights_y,
+        "top_left_x": top_left_x,
+        "top_left_y": top_left_y,
+        "top_rights_x": top_rights_x,
+        "top_rights_y": top_rights_y,
         "bottom_lefts_x": bottom_lefts_x,
         "bottom_lefts_y": bottom_lefts_y,
-        "bottom_rights_x" :bottom_rights_x,
-        "bottom_rights_y" :bottom_rights_y,
-        "automatic_detection":automatic_detection
+        "bottom_rights_x": bottom_rights_x,
+        "bottom_rights_y": bottom_rights_y,
+        "automatic_detection": automatic_detection
     }
 
     db_ref = database.collection(parkinglot_type).document(
         parkinglot_name).set(data)
     sg.popup_ok('Parking lot successfully created.')
 
+
 def capture():
     sg.popup_ok("Images are stored in the Samples folder.")
-    img_name=time.ctime(time.time()).replace(" ", "_").replace(":", "_")
+    img_name = time.ctime(time.time()).replace(" ", "_").replace(":", "_")
     print(img_name)
-    cap=cv.VideoCapture(0, cv.CAP_DSHOW)
-    cap.set(3,640)
-    cap.set(4,480)
+    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+    cap.set(3, 640)
+    cap.set(4, 480)
     if not cap.isOpened():
         sg.popup_error("Error opening camera")
         return
     sg.popup_ok('Press \'s\' to save the picture.')
     while True:
-        flag, img=cap.read()
+        flag, img = cap.read()
         cv.imshow('Take a picture', img)
-        
-        k=cv.waitKey(10)
-        #TODO add a way to retry
-        if k==ord('s'):
-            cv.imwrite("./ParkingLotManager/Samples/{}.jpg".format(img_name),img)
+
+        k = cv.waitKey(10)
+        # TODO add a way to retry
+        if k == ord('s'):
+            cv.imwrite(
+                "./ParkingLotManager/Samples/{}.jpg".format(img_name), img)
             cv.destroyAllWindows()
             break
-    
+
+
 def main():
     global drawing
     global ix
-    global iy 
+    global iy
     global ex
     global ey
-    global sample_img 
-    global imgCopy 
+    global sample_img
+    global imgCopy
     global sample_points
-    global position_list 
+    global position_list
     global width
     global height
-    global lot_names 
-    global lot_types 
-    global vacant_lots 
-    global previous_list 
-    global clas_names 
+    global lot_names
+    global lot_types
+    global vacant_lots
+    global previous_list
+    global clas_names
     global top_left_x
     global top_left_y
     global top_rights_x
@@ -540,16 +579,16 @@ def main():
     global bottom_lefts_y
     global bottom_rights_x
     global bottom_rights_y
-    #setting the theme
+    # setting the theme
     sg.LOOK_AND_FEEL_TABLE['custom_theme'] = {'BACKGROUND': '#4CC18A',
-                                        'TEXT': '#000',
-                                        'INPUT': '#339966',
-                                        'TEXT_INPUT': '#000000',
-                                        'SCROLL': '#99CC99',
-                                        'BUTTON': ('#000', '#12A460'),
-                                        'PROGRESS': ('#D1826B', '#CC8019'),
-                                        'BORDER': 2, 'SLIDER_DEPTH': 0, 
-                                        'PROGRESS_DEPTH': 0, }
+                                              'TEXT': '#000',
+                                              'INPUT': '#339966',
+                                              'TEXT_INPUT': '#000000',
+                                              'SCROLL': '#99CC99',
+                                              'BUTTON': ('#000', '#12A460'),
+                                              'PROGRESS': ('#D1826B', '#CC8019'),
+                                              'BORDER': 2, 'SLIDER_DEPTH': 0,
+                                              'PROGRESS_DEPTH': 0, }
 
     # sg.theme('Green')
     sg.theme('custom_theme')
@@ -557,7 +596,7 @@ def main():
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
         sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')],
         [sg.Button('Take a picture', key='Take')],
-          [sg.Button('Exit')]]
+        [sg.Button('Exit')]]
 
     main_window = sg.Window(
         'NDHU Smart-Park', layout=[home_layout], margins=(200, 50), element_justification='c')
@@ -579,14 +618,14 @@ def main():
         vacant_lots = []
         previous_list = []
         clas_names = []
-        top_left_x=[]
-        top_left_y=[]
-        top_rights_x=[]
-        top_rights_y=[]
-        bottom_lefts_x=[]
-        bottom_lefts_y=[]
-        bottom_rights_x=[]
-        bottom_rights_y=[]
+        top_left_x = []
+        top_left_y = []
+        top_rights_x = []
+        top_rights_y = []
+        bottom_lefts_x = []
+        bottom_lefts_y = []
+        bottom_rights_x = []
+        bottom_rights_y = []
         event, values = main_window.read()
         if event == 'Monitor':
             print('Monitor')
@@ -597,7 +636,7 @@ def main():
             main_window.Hide()
             create()
             main_window.un_hide()
-        elif event =='Take':
+        elif event == 'Take':
             main_window.Hide()
             capture()
             main_window.un_hide()
@@ -605,6 +644,7 @@ def main():
             break
 
     main_window.close()
+
 
 if __name__ == '__main__':
     main()
