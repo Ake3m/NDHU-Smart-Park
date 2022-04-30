@@ -159,8 +159,16 @@ def checkParkingSpacesAutomatic(image, points, confident_boxes, coll, doc):
     global previous_list, vacant_lots
     previous_list = vacant_lots.copy()
     db_ref = database.collection(coll).document(doc)
-    for point in points:
-         cv.polylines(image,[point],True,(0,255,0),2)
+    for i, point in enumerate(points):
+        topLeft, topRight, bottomRight, bottomLeft=point 
+        vacant_lots[i]=True
+        color=(0,255,0)
+        for box in confident_boxes:
+            if topLeft[0] < box[0] < topRight[0] and topLeft[1] < box[1] < bottomLeft[1]:
+                color = (0, 0, 255)
+
+                vacant_lots[i] = False
+        cv.polylines(image,[point],True,color,2)
 
 
 def checkParkingSpaces(image, width, height, position_list, confident_boxes, coll, doc):
