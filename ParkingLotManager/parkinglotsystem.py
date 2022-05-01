@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from charset_normalizer import detect
 import cv2 as cv
 import numpy as np
 from firebase_admin import initialize_app
@@ -166,9 +165,13 @@ def checkParkingSpacesAutomatic(image, points, confident_boxes, coll, doc):
         for box in confident_boxes:
             if topLeft[0] < box[0] < topRight[0] and topLeft[1] < box[1] < bottomLeft[1]:
                 color = (0, 0, 255)
-
                 vacant_lots[i] = False
         cv.polylines(image,[point],True,color,2)
+
+        if vacant_lots != previous_list:
+            previous_list = vacant_lots.copy()
+            db_ref.update({'lot': vacant_lots})
+            print("updated")
 
 
 def checkParkingSpaces(image, width, height, position_list, confident_boxes, coll, doc):

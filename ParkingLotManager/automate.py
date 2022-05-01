@@ -227,8 +227,10 @@ def outline(selected_img):
     image = cv.imread('./ParkingLotManager/Samples/{}'.format(selected_img)) # read the image
 
     # while True:
-    new_width = 900
-    new_height = 600
+    # new_width = 900
+    # new_height = 600
+    new_width = 640
+    new_height = 480
     dsize = (new_width, new_height)
     img = cv.resize(image, dsize)
     cpy=img.copy()
