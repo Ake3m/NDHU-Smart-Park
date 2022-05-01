@@ -230,6 +230,29 @@ def sortRow(points, iterations):
 # gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
 # gray = np.float32(gray)
 # gray = 1 - gray
+def sortPts(pts):
+    sum_list=[]
+    finished=False
+    for pt in pts:
+        sum_list.append(pt[0]+pt[1])
+    while not finished:
+        finished=True
+        for i, pt in enumerate(pts):
+            if i==len(pts)-1:
+                continue
+            if sum_list[i]>sum_list[i+1]:
+                finished=False
+                temp=sum_list[i]
+                sum_list[i]=sum_list[i+1]
+                sum_list[i+1]=temp
+                temp=pts[i].copy()
+                pts[i]=pts[i+1].copy()
+                pts[i+1]=temp.copy()
+    temp=pts[2]
+    pts[2]=pts[3]
+    pts[3]=temp
+    return pts
+
 def outline(selected_img):
     img = cv.imread('./ParkingLotManager/Samples/{}'.format(selected_img)) # read the image
     print(img.shape)
@@ -334,12 +357,14 @@ def outline(selected_img):
             if alreadyAdded[i]==False:
                 for j in range(4):
                     pts.append([np.round(centroids1[c[j]][0]), np.round(centroids1[c[j]][1])])
-                    print(pts)
+                print('PTS Before: {}'.format(pts))
+                pts=sortPts(pts)
+                print('PTS After: {}'.format(pts))
                 pts = np.array(pts, np.int32)
                 # pts = pts.reshape((-1,1,2))
                 cv.polylines(out_img,[pts],True,(0,255,255),5)
-                cv.imshow("Fix The Order",out_img)
-                cv.imshow("Correct", out_img2)
+                cv.imshow("Point Selection",out_img)
+                cv.imshow("Confirmation", out_img2)
                 k=cv.waitKey(0)
                 if k==ord('y'):
                     point_arr.append(pts)
@@ -352,6 +377,8 @@ def outline(selected_img):
                     point_arr=np.array(point_arr, dtype=np.int32)
                     parkingLot['row_{}'.format(rowCount)]=point_arr
                     point_arr=[]
+                    point_arr.append(pts)
+                    alreadyAdded[i]=True
                     rowCount+=1
             else:
                 for v in alreadyAdded:

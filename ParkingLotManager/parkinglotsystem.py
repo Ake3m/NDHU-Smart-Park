@@ -282,9 +282,9 @@ def monitor():
         'The monitor feed will appear. Click \'q\' in order to end monitor session.')
     # access camera and check lot
     # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
-    cap.set(3, 640)
-    cap.set(4, 480)
+    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
+    # cap.set(3, 640)
+    # cap.set(4, 480)
     wht = 320
     if not cap.isOpened():
         print("Error opening camera")
@@ -545,9 +545,9 @@ def capture():
     sg.popup_ok("Images are stored in the Samples folder.")
     img_name = time.ctime(time.time()).replace(" ", "_").replace(":", "_")
     print(img_name)
-    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
-    cap.set(3, 640)
-    cap.set(4, 480)
+    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
+    # cap.set(3, 640)
+    # cap.set(4, 480)
     if not cap.isOpened():
         sg.popup_error("Error opening camera")
         return
