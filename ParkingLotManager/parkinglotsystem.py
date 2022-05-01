@@ -10,7 +10,7 @@ import random
 import PySimpleGUI as sg
 from datetime import date
 import time
-import automate
+import automatic
 
 # GLOBAL VARIABLES SECTION
 drawing = False
@@ -493,7 +493,7 @@ def create():
         y_positions = [position[1] for position in position_list]
         vacant_lots = [True for lot in position_list]
     else:  # AUTOMATIC DETECTION
-        parking_lot_dict, lots_per_row = automate.outline(selected_img)
+        parking_lot_dict, lots_per_row = automatic.outline(selected_img)
         top_left_x = []
         top_left_y = []
         top_rights_x = []
