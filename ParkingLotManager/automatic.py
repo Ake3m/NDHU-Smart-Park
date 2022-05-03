@@ -378,8 +378,11 @@ def outline(selected_img):
                     parkingLot['row_{}'.format(rowCount)]=point_arr
                     point_arr=[]
                     point_arr.append(pts)
+                    cv.polylines(out_img2,[pts],True,(0,255,0),5)
                     alreadyAdded[i]=True
                     rowCount+=1
+                elif k==ord('d'):
+                    alreadyAdded[i]=True
             else:
                 for v in alreadyAdded:
                     if v ==False:
