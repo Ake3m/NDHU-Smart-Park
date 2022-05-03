@@ -930,6 +930,14 @@ def main():
         bottom_rights_x = []
         bottom_rights_y = []
         parking_lot_dict=dict()
+        coordinates_temp=[]
+        cycles=[]
+        editing=False
+        editing_row=0
+        editing_index=0
+        row_edit=False
+        row_was_edited=False
+
         event, values = main_window.read()
         if event == 'Monitor':
             print('Monitor')
