@@ -118,6 +118,8 @@ def changeOutlineLayout(events, x,y,flags, params):
     elif events == cv.EVENT_LBUTTONDBLCLK and editing==True and row_edit==False:
         editing=False
         coordinates_temp=[]
+        editing_row=0
+        editing_index=0
     if events ==cv.EVENT_LBUTTONDOWN and editing==True:
         coordinates_temp.append((x,y))
         print('appending')
@@ -723,7 +725,7 @@ def recapture(parking_lot_info):
                 "./ParkingLotManager/Samples/{}.jpg".format(img_name), img)
             cv.destroyAllWindows()
             break
-    parking_lot_dict, lots_per_row = automatic.outline(img_name)
+    parking_lot_dict, lots_per_row = automatic.outline('{}.jpg'.format(img_name))
     top_left_x = []
     top_left_y = []
     top_rights_x = []
