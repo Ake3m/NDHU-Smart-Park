@@ -43,6 +43,8 @@ parking_lot_dict=dict()
 editing=False
 editing_row=0
 editing_index=0
+row_edit=False
+row_was_edited=False
 
 
 confidence_threshold = 0.2
@@ -101,8 +103,9 @@ def definePoints(events, x, y, flags, params):
                 cycles.pop(i)
 
 def changeOutlineLayout(events, x,y,flags, params):
-    global editing, imgCopy, coordinates_temp, editing_row, editing_index
-    if events == cv.EVENT_LBUTTONDBLCLK and editing==False:
+    global editing, imgCopy, coordinates_temp, editing_row, editing_index, row_edit
+    global parking_lot_dict
+    if events == cv.EVENT_LBUTTONDBLCLK and editing==False and row_edit==False:
         print('editing enabled')
         editing=True
         for row in parking_lot_dict.keys():
@@ -112,12 +115,25 @@ def changeOutlineLayout(events, x,y,flags, params):
                     editing_row=row
                     editing_index=i
                     print('editing {} index {}'.format(editing_row, editing_index))
-        print('ended')
+    elif events == cv.EVENT_LBUTTONDBLCLK and editing==True and row_edit==False:
+        editing=False
+        coordinates_temp=[]
     if events ==cv.EVENT_LBUTTONDOWN and editing==True:
         coordinates_temp.append((x,y))
         print('appending')
-    if events ==cv.EVENT_LBUTTONDBLCLK and editing==False:
-        print('wtf')
+    if events ==cv.EVENT_RBUTTONDBLCLK and row_edit==False and editing==False:
+        row_edit=True
+        for row in parking_lot_dict.keys():
+            for i,points in enumerate(parking_lot_dict[row]):
+                tl, tr, br, bl = points
+                if tl[0]< x<tr[0] and tr[1] <y < br[1]:
+                    editing_row=row
+    elif events ==cv.EVENT_RBUTTONDBLCLK and row_edit==True and editing==False:
+        row_edit=False
+        coordinates_temp=[]
+    if events ==cv.EVENT_LBUTTONDOWN and row_edit==True:
+        coordinates_temp.append((x,y))
+
 
 
 def drawSample(selected):
@@ -594,6 +610,8 @@ def singleSpaceOutline(parking_lot_info):
     global imgCopy
     global coordinates_temp
     global editing
+    global row_edit
+    global row_was_edited
     img_name=parking_lot_info['imgURL']
     lots_per_row=parking_lot_info['lotsPerRow']
     capacity=parking_lot_info['capacity']
@@ -620,18 +638,30 @@ def singleSpaceOutline(parking_lot_info):
         
         img=cv.imread('./ParkingLotManager/Samples/{}'.format(img_name))
         if len(coordinates_temp) == 4 and editing==True:
-            print('Before {}'.format(parking_lot_dict))
             parking_lot_dict[editing_row][editing_index]=np.array(coordinates_temp, np.int32)
-            print('After {}'.format(parking_lot_dict))
             coordinates_temp=[]
             editing=False
+        elif len(coordinates_temp)==4 and row_edit==True:
+            temp=parking_lot_dict[editing_row].tolist()
+            temp.append(coordinates_temp)
+            
+            temp=np.array(temp, np.int32)
+            print('Before:{}'.format(temp))
+            temp=automatic.sortRow(temp, len(temp))
+            print('After {}'.format(temp))
+            
+            parking_lot_dict[editing_row]=temp.copy()
+            coordinates_temp=[]
+            row_edit=False
+            
         
         for row in parking_lot_dict.keys():
             for i,points in enumerate(parking_lot_dict[row]):
-                if editing==True and i==editing_index and row ==editing_row:
+                if editing==True and i==editing_index and row ==editing_row or row_edit==True and row==editing_row:
                     color=(255,255,0)
                 else:
                     color=(0,255,0)
+                # print(type(points))
                 cv.polylines(img,[points],True,color,2)
         for points in coordinates_temp:
             cv.rectangle(img, points, (points[0], points[1]), (0,0,255), 5)
@@ -640,7 +670,36 @@ def singleSpaceOutline(parking_lot_info):
         k=cv.waitKey(1)
         if k==ord('q'):
             cv.destroyAllWindows()
+            return
+        if k==ord('s'):
+            cv.destroyAllWindows()
+            for rows in parking_lot_dict.keys():
+                for k in parking_lot_dict[rows]:
+                    top_left_x.append(float(k[0][0]))
+                    top_left_y.append(float(k[0][1]))
+                    top_rights_x.append(float(k[1][0]))
+                    top_rights_y.append(float(k[1][1]))
+                    bottom_rights_x.append(float(k[2][0]))
+                    bottom_rights_y.append(float(k[2][1]))
+                    bottom_lefts_x.append(float(k[3][0]))
+                    bottom_lefts_y.append(float(k[3][1]))
+                    vacant_lots = [True for points in top_left_x]
+                lots_per_row=len(parking_lot_dict[rows])
+            
+            
+            parking_lot_info.update({
+            "top_left_x": top_left_x,
+            "top_left_y": top_left_y,
+            "top_rights_x": top_rights_x,
+            "top_rights_y": top_rights_y,
+            "bottom_lefts_x": bottom_lefts_x,
+            "bottom_lefts_y": bottom_lefts_y,
+            "bottom_rights_x": bottom_rights_x,
+            "bottom_rights_y": bottom_rights_y,
+            "lotsPerRow": lots_per_row
+            })
             break
+        
 
     
 def recapture(parking_lot_info):
@@ -764,12 +823,13 @@ def calibrate():
             if events == sg.WIN_CLOSED:
                 return
             if events == 'R':
+                editWindow.close()
                 recapture(parking_lot_info)
                 break 
             if events=='S':
+                editWindow.close()
                 singleSpaceOutline(parking_lot_info)
                 break
-        editWindow.close()
     else:
         edit(collection_choice, doc_choice,parking_lot_info)
 def capture():
