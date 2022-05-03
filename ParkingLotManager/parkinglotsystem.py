@@ -37,6 +37,9 @@ bottom_lefts_x = []
 bottom_lefts_y = []
 bottom_rights_x = []
 bottom_rights_y = []
+coordinates_temp=[]
+cycles=[]
+parking_lot_dict=dict()
 
 
 confidence_threshold = 0.2
@@ -88,6 +91,15 @@ def outlineParkingSpace(events, x, y, flags, parameters):
             if x1 < x < x1+width and y1 < y < y1+height:
                 print("Yes")
                 position_list.pop(i)
+def definePoints(events, x, y, flags, params):
+    if events == cv.EVENT_LBUTTONDOWN:
+        coordinates_temp.append((x,y))
+    if events==cv.EVENT_RBUTTONDOWN:
+        for i, cycle in enumerate(cycles):
+            print(cycle)
+            tl, tr, br, bl = cycle
+            if tl[0]< x<tr[0] and tr[1] <y < br[1]:
+                cycles.pop(i)
 
 
 def drawSample(selected):
@@ -113,6 +125,7 @@ def drawSample(selected):
             imgCopy = cv.resize(imgCopy, (640, 480))
     cv.destroyAllWindows()
 
+    
 
 def findObjects(outputs, img):
     global confidence_threshold, nms_threshold, class_names
@@ -418,6 +431,9 @@ def create():
     global bottom_lefts_y
     global bottom_rights_x
     global bottom_rights_y
+    global coordinates_temp
+    global cycles
+    global parking_lot_dict
     parkinglot_type = ''
     parkinglot_name = ''
     x_positions = []
@@ -466,53 +482,100 @@ def create():
     print(automatic_detection)
     if automatic_detection == False:  # MANUAL SELECTION CODE
         img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
-        img = cv.resize(img, (900, 600))
-
-        # print(position_list)
-        drawSample(selected_img)
-        createWindow = sg.popup_ok(
-            'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
-        width = sample_points[2]-sample_points[0]
-        height = sample_points[3]-sample_points[1]
+        # img = cv.resize(img, (900, 600))
+        manual_mode_method=''
+        manual_select_layout = [[sg.Text('Select Manual Mode outline method:')], [
+        sg.Combo(['Rectangles', 'Flexible'], key='choice'), sg.Button('Next', key='next')]]
+        manual_select_window=sg.Window('Manual Mode Selection', manual_select_layout)
         while True:
-            sample_img = cv.imread(
-                "./ParkingLotManager/Samples/{}".format(selected_img))
-            sample_img = cv.resize(sample_img, (650, 480))
-            for position in position_list:
-                cv.rectangle(sample_img, tuple(
-                    position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
-            cv.imshow("Outline Parking Lot", sample_img)
-            cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
-            k = cv.waitKey(1)
-            if k == ord('s'):
-                cv.destroyAllWindows()
+            event, values=manual_select_window.read()
+            if event==sg.WIN_CLOSED:
+                return
+            if event == 'next' and values['choice']!='':
+                manual_mode_method=values['choice']
                 break
-        lots_per_row = int(sg.popup_get_text(title='Almost Done',
-                                             message='Lastly, how many lots per row are there?'))
-        x_positions = [position[0] for position in position_list]
-        y_positions = [position[1] for position in position_list]
-        vacant_lots = [True for lot in position_list]
+            if event =='next' and values['choice']=='':
+                sg.popup('Please select a type')
+        manual_select_window.close()
+        if manual_mode_method=='Rectangles':
+        
+            # print(position_list)
+            drawSample(selected_img)
+            createWindow = sg.popup_ok(
+                'Left click the top left corner of each lot to outline\nRight click anywhere in the outline to remove it.\nPress \'s\' to save.')
+            width = sample_points[2]-sample_points[0]
+            height = sample_points[3]-sample_points[1]
+            while True:
+               
+                sample_img = cv.imread(
+                    "./ParkingLotManager/Samples/{}".format(selected_img))
+                # sample_img = cv.resize(sample_img, (650, 480))
+                for position in position_list:
+                    cv.rectangle(sample_img, tuple(
+                        position), (position[0]+width, position[1]+height), (0, 255, 0), 3)
+                cv.imshow("Outline Parking Lot", sample_img)
+                cv.setMouseCallback("Outline Parking Lot", outlineParkingSpace)
+                k = cv.waitKey(1)
+                if k == ord('s'):
+                    cv.destroyAllWindows()
+                    break
+            lots_per_row = int(sg.popup_get_text(title='Almost Done',
+                                                message='Lastly, how many lots per row are there?'))
+            x_positions = [position[0] for position in position_list]
+            y_positions = [position[1] for position in position_list]
+            vacant_lots = [True for lot in position_list]
+        else:
+            print('Flexible')
+            lots_per_row=1
+            row_count=1
+            row=[]
+            sg.popup_ok('Be sure to select the points in a clockwise  order. Starting from top-left')
+            while True:
+                sample_img = cv.imread(
+                    "./ParkingLotManager/Samples/{}".format(selected_img))
+                if len(coordinates_temp)==4:
+                    cycles.append(np.array(coordinates_temp))
+                    row.append(np.array(coordinates_temp))
+                    coordinates_temp=[]
+                
+                for cycle in cycles:
+                     cv.polylines(sample_img,[cycle],True,(0,255,0),2)
+                for c in coordinates_temp:
+                    cv.rectangle(sample_img, (c),(c[0]+10, c[1]+10),(0,0,255), -1)
+                cv.imshow('Select the points', sample_img)
+                cv.setMouseCallback('Select the points', definePoints)
+                k=cv.waitKey(1)
+                if k==ord('s'):
+                    cv.destroyAllWindows()
+                    parking_lot_dict['row_{}'.format(row_count)]=row
+                    break
+                if k==ord('c'):
+                    parking_lot_dict['row_{}'.format(row_count)]=row
+                    lots_per_row=len(row)
+                    row=[]
+                    row_count+=1
+
     else:  # AUTOMATIC DETECTION
         parking_lot_dict, lots_per_row = automatic.outline(selected_img)
-        top_left_x = []
-        top_left_y = []
-        top_rights_x = []
-        top_rights_y = []
-        bottom_lefts_x = []
-        bottom_lefts_y = []
-        bottom_rights_x = []
-        bottom_rights_y = []
-        for rows in parking_lot_dict.keys():
-            for k in parking_lot_dict[rows]:
-                top_left_x.append(float(k[0][0]))
-                top_left_y.append(float(k[0][1]))
-                top_rights_x.append(float(k[1][0]))
-                top_rights_y.append(float(k[1][1]))
-                bottom_rights_x.append(float(k[2][0]))
-                bottom_rights_y.append(float(k[2][1]))
-                bottom_lefts_x.append(float(k[3][0]))
-                bottom_lefts_y.append(float(k[3][1]))
-        vacant_lots = [True for points in top_left_x]
+    top_left_x = []
+    top_left_y = []
+    top_rights_x = []
+    top_rights_y = []
+    bottom_lefts_x = []
+    bottom_lefts_y = []
+    bottom_rights_x = []
+    bottom_rights_y = []
+    for rows in parking_lot_dict.keys():
+        for k in parking_lot_dict[rows]:
+            top_left_x.append(float(k[0][0]))
+            top_left_y.append(float(k[0][1]))
+            top_rights_x.append(float(k[1][0]))
+            top_rights_y.append(float(k[1][1]))
+            bottom_rights_x.append(float(k[2][0]))
+            bottom_rights_y.append(float(k[2][1]))
+            bottom_lefts_x.append(float(k[3][0]))
+            bottom_lefts_y.append(float(k[3][1]))
+    vacant_lots = [True for points in top_left_x]
 
     data = {
         "name": parkinglot_name,
@@ -606,6 +669,7 @@ def main():
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
         sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')],
+        [sg.Button('Cailbrate Pakring Lot')],
         [sg.Button('Take a picture', key='Take')],
         [sg.Button('Exit')]]
 
@@ -637,6 +701,7 @@ def main():
         bottom_lefts_y = []
         bottom_rights_x = []
         bottom_rights_y = []
+        parking_lot_dict=dict()
         event, values = main_window.read()
         if event == 'Monitor':
             print('Monitor')
