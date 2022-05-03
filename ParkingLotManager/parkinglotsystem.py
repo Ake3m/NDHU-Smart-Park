@@ -825,11 +825,11 @@ def calibrate():
             if events == sg.WIN_CLOSED:
                 return
             if events == 'R':
-                editWindow.close()
+                calibrate_window.close()
                 recapture(parking_lot_info)
                 break 
             if events=='S':
-                editWindow.close()
+                calibrate_window.close()
                 singleSpaceOutline(parking_lot_info)
                 break
     else:
