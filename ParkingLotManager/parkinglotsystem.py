@@ -608,7 +608,8 @@ def create():
     sg.popup_ok('Parking lot successfully created.')
 
 
-def singleSpaceOutline(parking_lot_info):
+def singleSpaceOutline(collection_choice, doc_choice):
+    parking_lot_info = database.collection(collection_choice).document(doc_choice)
     global parking_lot_dict
     global imgCopy
     global coordinates_temp
@@ -705,7 +706,8 @@ def singleSpaceOutline(parking_lot_info):
         
 
     
-def recapture(parking_lot_info):
+def recapture(collection_choice, doc_choice):
+    parking_lot_info = database.collection(collection_choice).document(doc_choice)
     img_name = time.ctime(time.time()).replace(" ", "_").replace(":", "_")
     print(img_name)
     cap = cv.VideoCapture(1, cv.CAP_DSHOW)
@@ -827,11 +829,11 @@ def calibrate():
                 return
             if events == 'R':
                 calibrate_window.close()
-                recapture(parking_lot_info)
+                recapture(collection_choice, doc_choice)
                 break 
             if events=='S':
                 calibrate_window.close()
-                singleSpaceOutline(parking_lot_info)
+                singleSpaceOutline(collection_choice, doc_choice)
                 break
     else:
         edit(collection_choice, doc_choice,parking_lot_info)
