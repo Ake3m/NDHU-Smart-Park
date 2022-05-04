@@ -46,7 +46,11 @@ editing_index=0
 row_edit=False
 row_was_edited=False
 
-
+#CONSTANTS SECTION
+CAMERA_INPUT=1
+YOLOV3_WEIGHTS=""
+YOLOV3_CFG=""
+#YOLO CONFIGURATION SECTION
 confidence_threshold = 0.2
 nms_threshold = 0.3  # originally set to 0.3
 
@@ -208,7 +212,8 @@ def checkParkingSpacesAutomatic(image, points, confident_boxes, coll, doc):
     previous_list = vacant_lots.copy()
     db_ref = database.collection(coll).document(doc)
     for i, point in enumerate(points):
-        topLeft, topRight, bottomRight, bottomLeft=point 
+        topLeft, topRight, bottomRight, bottomLeft=point
+        print(points[i])
         vacant_lots[i]=True
         color=(0,255,0)
         for box in confident_boxes:
@@ -237,7 +242,7 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
         for box in confident_boxes:
             if x < box[0] < x+width and y < box[1] < y+height:
                 color = (0, 0, 255)
-                thickness = 1
+                thickness = 2
                 vacant_lots[i] = False
                 # cv.rectangle(image, (x,y),(x,+),(255,0,0), 5)
 
@@ -318,8 +323,8 @@ def monitor():
             points.append([[top_left_x[i], top_left_y[i]], [top_rights_x[i], top_rights_y[i]], [
                             bottom_rights_x[i], bottom_rights_y[i]], [bottom_lefts_x[i], bottom_lefts_y[i]]])
         
-        print(len(points))
-        print(points)
+        # print(len(points))
+        # print(points)
         points=np.array(points, dtype=np.int32)
     else:
         for i in range(len(parking_lot_info["x"])):
@@ -338,6 +343,7 @@ def monitor():
     wht = 320
     if not cap.isOpened():
         print("Error opening camera")
+        sg.popup_error('Error Opening Camera.')
         exit()
     # yolov3 config
     class_names = ['Car', 'Motorcycle']
@@ -447,7 +453,9 @@ def create():
                       sg.Radio('Scooter', 'TYPE', key='scooter')],
                      [sg.Text('Parking Lot Name:'),
                       sg.Input(key='lot_name')], [sg.Text('In order to create a parking lot, perform the following steps:')],
-                     [sg.Text('Manual Method:\n1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.')],
+                     [sg.Text('Manual Method (Rectangle):\n1. Place a sample image of the parking lot in the \"Samples\" folder.\n2. Take a sample of one of the parking spaces.\n3. Outline the parking lot by clicking the top left of each lot.\n\t -Left click to add\n\t -Right click to remove\n4. Press \"s\" to save, \"q\" to quit.')],
+                     [sg.Text('Manual Method(Flexible):\n1) From left to right, select 4 parking lot points in a clockwise order ; from top-left to bottom left.\n2)Press \'c\' before you change to a new row. Press \'s\' when you are finished to save.')],
+                     [sg.Text('Automatic Method:\nThe program determines the boxes for you.\nStart from the first row, Press \'y\' to accept the box, \'n\' to cycle through the boxes and \'d\' to discard.\nPress \'c\' when you change rows and \'s\' to save.')],
                      [sg.Text('Would you like to try automatic outlining?')],
                      [sg.Radio('Yes', 'OUTLINE', key='yes'),
                       sg.Radio('No', 'OUTLINE', default=True, key='no')],
@@ -551,6 +559,7 @@ def create():
                 if k==ord('s'):
                     cv.destroyAllWindows()
                     parking_lot_dict['row_{}'.format(row_count)]=row
+                    lots_per_row=len(row)
                     break
                 if k==ord('c'):
                     parking_lot_dict['row_{}'.format(row_count)]=row
@@ -608,7 +617,7 @@ def create():
     sg.popup_ok('Parking lot successfully created.')
 
 
-def singleSpaceOutline(collection_choice, doc_choice):
+def singleSpaceOutline(collection_choice, doc_choice, dict):
     parking_lot_info = database.collection(collection_choice).document(doc_choice)
     global parking_lot_dict
     global imgCopy
@@ -616,20 +625,20 @@ def singleSpaceOutline(collection_choice, doc_choice):
     global editing
     global row_edit
     global row_was_edited
-    img_name=parking_lot_info['imgURL']
-    lots_per_row=parking_lot_info['lotsPerRow']
-    capacity=parking_lot_info['capacity']
+    img_name=dict['imgURL']
+    lots_per_row=dict['lotsPerRow']
+    capacity=dict['capacity']
     rows=capacity/lots_per_row
     row_count=1
     points=[]
-    top_left_x = parking_lot_info['top_left_x']
-    top_left_y = parking_lot_info['top_left_y']
-    top_rights_x = parking_lot_info['top_rights_x']
-    top_rights_y = parking_lot_info['top_rights_y']
-    bottom_lefts_x = parking_lot_info['bottom_lefts_x']
-    bottom_lefts_y = parking_lot_info['bottom_lefts_y']
-    bottom_rights_x = parking_lot_info['bottom_rights_x']
-    bottom_rights_y = parking_lot_info['bottom_rights_y']
+    top_left_x = dict['top_left_x']
+    top_left_y = dict['top_left_y']
+    top_rights_x = dict['top_rights_x']
+    top_rights_y = dict['top_rights_y']
+    bottom_lefts_x = dict['bottom_lefts_x']
+    bottom_lefts_y = dict['bottom_lefts_y']
+    bottom_rights_x = dict['bottom_rights_x']
+    bottom_rights_y = dict['bottom_rights_y']
     for i in range(capacity):
         print(i)
         points.append([[top_left_x[i], top_left_y[i]], [top_rights_x[i], top_rights_y[i]], [
@@ -638,11 +647,13 @@ def singleSpaceOutline(collection_choice, doc_choice):
             parking_lot_dict['row_{}'.format(row_count)]=np.array(points, np.int32)
             points=[]
             row_count+=1
+    print(parking_lot_dict)
     while True:
         
         img=cv.imread('./ParkingLotManager/Samples/{}'.format(img_name))
         if len(coordinates_temp) == 4 and editing==True:
             parking_lot_dict[editing_row][editing_index]=np.array(coordinates_temp, np.int32)
+            # print(parking_lot_dict)
             coordinates_temp=[]
             editing=False
         elif len(coordinates_temp)==4 and row_edit==True:
@@ -677,6 +688,15 @@ def singleSpaceOutline(collection_choice, doc_choice):
             return
         if k==ord('s'):
             cv.destroyAllWindows()
+            print(parking_lot_dict)
+            top_left_x = []
+            top_left_y =[]
+            top_rights_x = []
+            top_rights_y = []
+            bottom_lefts_x = []
+            bottom_lefts_y = []
+            bottom_rights_x =[]
+            bottom_rights_y = []
             for rows in parking_lot_dict.keys():
                 for k in parking_lot_dict[rows]:
                     top_left_x.append(float(k[0][0]))
@@ -700,7 +720,9 @@ def singleSpaceOutline(collection_choice, doc_choice):
             "bottom_lefts_y": bottom_lefts_y,
             "bottom_rights_x": bottom_rights_x,
             "bottom_rights_y": bottom_rights_y,
-            "lotsPerRow": lots_per_row
+            "lotsPerRow": lots_per_row,
+            "lot":vacant_lots,
+            "capacity":len(vacant_lots)
             })
             break
         
@@ -751,7 +773,7 @@ def recapture(collection_choice, doc_choice):
     parking_lot_info.update({
         "lot": vacant_lots,
         "lotsPerRow": lots_per_row,
-        "imgURL": img_name,
+        "imgURL": '{}.jpg'.format(img_name),
         "top_left_x": top_left_x,
         "top_left_y": top_left_y,
         "top_rights_x": top_rights_x,
@@ -833,7 +855,7 @@ def calibrate():
                 break 
             if events=='S':
                 calibrate_window.close()
-                singleSpaceOutline(collection_choice, doc_choice)
+                singleSpaceOutline(collection_choice, doc_choice, parking_lot_info)
                 break
     else:
         edit(collection_choice, doc_choice,parking_lot_info)
