@@ -302,6 +302,7 @@ def monitor():
     parking_lot_info = database.collection(collection_choice).document(
         doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
     uses_points = parking_lot_info['uses_points']
+    parking_lot_name=parking_lot_info['name']
     if uses_points == True:
         points = []
         top_left_x = parking_lot_info['top_left_x']
@@ -369,7 +370,7 @@ def monitor():
         else:
             checkParkingSpaces(img, width, height, position_list,
                                conf_box, collection_choice, doc_choice)
-        cv.imshow("Monitor feed", img)
+        cv.imshow("{} Parking Lot Monitor Feed".format(parking_lot_name), img)
 
         k = cv.waitKey(10)
         if k == ord('q'):
@@ -899,7 +900,7 @@ def main():
     img_path = './ParkingLotManager/assets/smartparklogo_300x350.png'
     home_layout = [[sg.Image(img_path, )], [sg.Text('Welcome to NDHU Smart Park', size=(35, 1), justification='center')], [
         sg.Text('What would you like to do?', size=(35, 1), justification='center')], [sg.Button('Monitor Parking Lot', key='Monitor')], [sg.Button('Create Parking Lot', key='Create')],
-        [sg.Button('Cailbrate Pakring Lot', key='Calibrate')],
+        [sg.Button('Calibrate Parking Lot', key='Calibrate')],
         [sg.Button('Take a picture', key='Take')],
         [sg.Button('Exit')]]
 
