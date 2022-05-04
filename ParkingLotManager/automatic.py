@@ -230,28 +230,37 @@ def sortRow(points, iterations):
 # gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
 # gray = np.float32(gray)
 # gray = 1 - gray
+
+
 def sortPts(pts):
-    sum_list=[]
-    finished=False
-    for pt in pts:
-        sum_list.append(pt[0]+pt[1])
-    while not finished:
-        finished=True
-        for i, pt in enumerate(pts):
-            if i==len(pts)-1:
+    print('Before sorting:{}'.format(pts))
+    ptsCopy=pts.copy()
+    originalOrder=[i for i in range(len(pts))]
+    for i in range(len(pts)):
+        for j in range(len(pts)):
+            if j==len(pts)-1:
                 continue
-            if sum_list[i]>sum_list[i+1]:
-                finished=False
-                temp=sum_list[i]
-                sum_list[i]=sum_list[i+1]
-                sum_list[i+1]=temp
-                temp=pts[i].copy()
-                pts[i]=pts[i+1].copy()
-                pts[i+1]=temp.copy()
-    temp=pts[2]
-    pts[2]=pts[3]
-    pts[3]=temp
-    return pts
+            if ptsCopy[j][1]>ptsCopy[j+1][1]:
+                temp=ptsCopy[j].copy()
+                ptsCopy[j]=ptsCopy[j+1].copy()
+                ptsCopy[j+1]=temp.copy()
+                temp=originalOrder[j]
+                originalOrder[j]=originalOrder[j+1]
+                originalOrder[j]=temp
+    print('After sorting:{}'.format(pts))
+    if ptsCopy[0][0]>ptsCopy[1][0]:
+        temp=ptsCopy[0].copy()
+        ptsCopy[0]=ptsCopy[1].copy()
+        ptsCopy[1]=temp.copy()
+    
+    if ptsCopy[2][0]<ptsCopy[3][0]:
+        temp=ptsCopy[2].copy()
+        ptsCopy[2]=ptsCopy[3].copy()
+        ptsCopy[3]=temp.copy()
+    
+    return ptsCopy
+    
+
 
 def outline(selected_img):
     img = cv.imread('./ParkingLotManager/Samples/{}'.format(selected_img)) # read the image
@@ -357,9 +366,10 @@ def outline(selected_img):
             if alreadyAdded[i]==False:
                 for j in range(4):
                     pts.append([np.round(centroids1[c[j]][0]), np.round(centroids1[c[j]][1])])
-                print('PTS Before: {}'.format(pts))
+                print('PTS Before sorting and rotate: {}'.format(pts))
+                # pts=sortPts(pts)
                 pts=sortPts(pts)
-                print('PTS After: {}'.format(pts))
+                print('PTS After sorting and rotate: {}'.format(pts))
                 pts = np.array(pts, np.int32)
                 # pts = pts.reshape((-1,1,2))
                 cv.polylines(out_img,[pts],True,(0,255,255),5)
