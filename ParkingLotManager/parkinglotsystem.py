@@ -47,9 +47,9 @@ row_edit=False
 row_was_edited=False
 
 #CONSTANTS SECTION
-CAMERA_INPUT=1
-YOLOV3_WEIGHTS=""
-YOLOV3_CFG=""
+CAMERA_INPUT=0 #Change this depending on onboard or external webcam
+YOLOV3_WEIGHTS='./ParkingLotManager/yolov3/yolov3-custom_last.weights' #Change this to edit the path to the yolov3 weights path
+YOLOV3_CFG='./ParkingLotManager/yolov3/yolov3-custom.cfg' #Change this to edit the path to the cfg file
 #YOLO CONFIGURATION SECTION
 confidence_threshold = 0.2
 nms_threshold = 0.3  # originally set to 0.3
@@ -192,7 +192,7 @@ def findObjects(outputs, img):
                 bounding_box.append([center_x, center_y, width, height])
                 classIds.append(classId)
                 confidence_list.append(float(confidence))
-    print(len(bounding_box))
+    # print(len(bounding_box))
     indices = cv.dnn.NMSBoxes(
         bounding_box, confidence_list, confidence_threshold, nms_threshold)
     confident_boxes = []
@@ -200,8 +200,8 @@ def findObjects(outputs, img):
         box = bounding_box[i]
         x, y, w, h = box[0], box[1], box[2], box[3]
         cv.rectangle(img, (x, y), (x+0, y+0), (255, 255, 255), 10)
-        cv.putText(img, f'{class_names[classIds[i]]} {int(confidence_list[i]*100)}%',
-                   (x, y), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        # cv.putText(img, f'{class_names[classIds[i]]} {int(confidence_list[i]*100)}%',
+                #    (x, y), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         confident_boxes.append(box)
 
     return confident_boxes
@@ -213,7 +213,7 @@ def checkParkingSpacesAutomatic(image, points, confident_boxes, coll, doc):
     db_ref = database.collection(coll).document(doc)
     for i, point in enumerate(points):
         topLeft, topRight, bottomRight, bottomLeft=point
-        print(points[i])
+        # print(points[i])
         vacant_lots[i]=True
         color=(0,255,0)
         for box in confident_boxes:
@@ -252,7 +252,7 @@ def checkParkingSpaces(image, width, height, position_list, confident_boxes, col
         if vacant_lots != previous_list:
             previous_list = vacant_lots.copy()
             db_ref.update({'lot': vacant_lots})
-            print("updated")
+            # print("updated")
 
 
 def monitor():
@@ -274,7 +274,7 @@ def monitor():
     close = False
     collections = database.collections()
     lot_types = [collection.id for collection in collections]
-    print(collections)
+    # print(collections)
     monitor_layout1 = [[sg.Text('Which parking Lot Type would you like to monitor?')], [
         sg.Combo(lot_types, key='choice'), sg.Button('Next', key='next')]]
     monitorWindow = sg.Window('Select lot type', monitor_layout1)
@@ -337,18 +337,18 @@ def monitor():
         'The monitor feed will appear. Click \'q\' in order to end monitor session.')
     # access camera and check lot
     # change to 0 for laptop webcam, 1 for external webcam
-    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+    cap = cv.VideoCapture(CAMERA_INPUT, cv.CAP_DSHOW)
     # cap.set(3, 640)
     # cap.set(4, 480)
     wht = 320
     if not cap.isOpened():
-        print("Error opening camera")
+        # print("Error opening camera")
         sg.popup_error('Error Opening Camera.')
         exit()
     # yolov3 config
     class_names = ['Car', 'Motorcycle']
-    modelConfiguration = './ParkingLotManager/yolov3/yolov3-custom.cfg'
-    modelWeights = './ParkingLotManager/yolov3/yolov3-custom_last.weights'
+    modelConfiguration = YOLOV3_CFG #edit the path above
+    modelWeights = YOLOV3_WEIGHTS #edit the path above
     net = cv.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
     net.setPreferableBackend(cv.dnn.DNN_BACKEND_OPENCV)
     net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
@@ -392,7 +392,7 @@ def edit(collection_choice, doc_choice,parking_lot_info):
         position_list.append(
             (parking_lot_info["x"][i], parking_lot_info["y"][i]))
     vacant_lots = parking_lot_info["lot"]
-    print(vacant_lots)
+    # print(vacant_lots)
     width = parking_lot_info["width"]
     height = parking_lot_info["height"]
     sg.popup_ok('After making the appropriate changes, press \'s\' to save')
@@ -489,7 +489,7 @@ def create():
     createWindow.close()
     if close == True:
         return
-    print(uses_points)
+    # print(uses_points)
     if uses_points == False:  # MANUAL SELECTION CODE
         img = cv.imread("./ParkingLotManager/Samples/{}".format(selected_img))
         # img = cv.resize(img, (900, 600))
@@ -535,7 +535,7 @@ def create():
             y_positions = [position[1] for position in position_list]
             vacant_lots = [True for lot in position_list]
         else:
-            print('Flexible')
+            # print('Flexible')
             uses_points=True
             lots_per_row=1
             row_count=1
@@ -640,14 +640,14 @@ def singleSpaceOutline(collection_choice, doc_choice, dict):
     bottom_rights_x = dict['bottom_rights_x']
     bottom_rights_y = dict['bottom_rights_y']
     for i in range(capacity):
-        print(i)
+        # print(i)
         points.append([[top_left_x[i], top_left_y[i]], [top_rights_x[i], top_rights_y[i]], [
                         bottom_rights_x[i], bottom_rights_y[i]], [bottom_lefts_x[i], bottom_lefts_y[i]]])
         if (i+1) % lots_per_row == 0:
             parking_lot_dict['row_{}'.format(row_count)]=np.array(points, np.int32)
             points=[]
             row_count+=1
-    print(parking_lot_dict)
+    # print(parking_lot_dict)
     while True:
         
         img=cv.imread('./ParkingLotManager/Samples/{}'.format(img_name))
@@ -661,9 +661,9 @@ def singleSpaceOutline(collection_choice, doc_choice, dict):
             temp.append(coordinates_temp)
             
             temp=np.array(temp, np.int32)
-            print('Before:{}'.format(temp))
+            # print('Before:{}'.format(temp))
             temp=automatic.sortRow(temp, len(temp))
-            print('After {}'.format(temp))
+            # print('After {}'.format(temp))
             
             parking_lot_dict[editing_row]=temp.copy()
             coordinates_temp=[]
@@ -688,7 +688,7 @@ def singleSpaceOutline(collection_choice, doc_choice, dict):
             return
         if k==ord('s'):
             cv.destroyAllWindows()
-            print(parking_lot_dict)
+            # print(parking_lot_dict)
             top_left_x = []
             top_left_y =[]
             top_rights_x = []
@@ -731,8 +731,8 @@ def singleSpaceOutline(collection_choice, doc_choice, dict):
 def recapture(collection_choice, doc_choice):
     parking_lot_info = database.collection(collection_choice).document(doc_choice)
     img_name = time.ctime(time.time()).replace(" ", "_").replace(":", "_")
-    print(img_name)
-    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
+    # print(img_name)
+    cap = cv.VideoCapture(CAMERA_INPUT, cv.CAP_DSHOW)
     # cap.set(3, 640)
     # cap.set(4, 480)
     if not cap.isOpened():
@@ -862,8 +862,8 @@ def calibrate():
 def capture():
     sg.popup_ok("Images are stored in the Samples folder.")
     img_name = time.ctime(time.time()).replace(" ", "_").replace(":", "_")
-    print(img_name)
-    cap = cv.VideoCapture(1, cv.CAP_DSHOW)
+    # print(img_name)
+    cap = cv.VideoCapture(CAMERA_INPUT, cv.CAP_DSHOW)
     # cap.set(3, 640)
     # cap.set(4, 480)
     if not cap.isOpened():
@@ -967,7 +967,7 @@ def main():
 
         event, values = main_window.read()
         if event == 'Monitor':
-            print('Monitor')
+            # print('Monitor')
             main_window.Hide()
             monitor()
             main_window.un_hide()

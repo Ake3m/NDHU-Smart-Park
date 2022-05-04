@@ -233,7 +233,7 @@ def sortRow(points, iterations):
 
 
 def sortPts(pts):
-    print('Before sorting:{}'.format(pts))
+    # print('Before sorting:{}'.format(pts))
     ptsCopy=pts.copy()
     originalOrder=[i for i in range(len(pts))]
     for i in range(len(pts)):
@@ -247,7 +247,7 @@ def sortPts(pts):
                 temp=originalOrder[j]
                 originalOrder[j]=originalOrder[j+1]
                 originalOrder[j]=temp
-    print('After sorting:{}'.format(pts))
+    # print('After sorting:{}'.format(pts))
     if ptsCopy[0][0]>ptsCopy[1][0]:
         temp=ptsCopy[0].copy()
         ptsCopy[0]=ptsCopy[1].copy()
@@ -366,10 +366,10 @@ def outline(selected_img):
             if alreadyAdded[i]==False:
                 for j in range(4):
                     pts.append([np.round(centroids1[c[j]][0]), np.round(centroids1[c[j]][1])])
-                print('PTS Before sorting and rotate: {}'.format(pts))
+                # print('PTS Before sorting and rotate: {}'.format(pts))
                 # pts=sortPts(pts)
                 pts=sortPts(pts)
-                print('PTS After sorting and rotate: {}'.format(pts))
+                # print('PTS After sorting and rotate: {}'.format(pts))
                 pts = np.array(pts, np.int32)
                 # pts = pts.reshape((-1,1,2))
                 cv.polylines(out_img,[pts],True,(0,255,255),5)
