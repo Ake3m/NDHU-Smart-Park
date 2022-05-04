@@ -843,7 +843,9 @@ def calibrate():
     parking_lot_info = database.collection(collection_choice).document(
         doc_choice).get().to_dict()  # gets the data from database and converts to dictionary
     if parking_lot_info['uses_points']==True:
-        calibrate_layout=[[sg.Text('What changes do you want to make?')],[sg.Button('Recapture', key='R'),sg.Button('Single Space Outline', key='S')]]
+        calibrate_layout=[[sg.Text('What changes do you want to make?')],
+        [sg.Text('Use Cases:\n Recapture: If you have used automatic detection and the camera has been moved. Use this\nSingle Space Outline: Edit individual boxes or rows')],
+        [sg.Button('Recapture', key='R'),sg.Button('Single Space Outline', key='S')]]
         calibrate_window =sg.Window('Please choose one', calibrate_layout)
         while True:
             events, values = calibrate_window.read()
@@ -854,6 +856,7 @@ def calibrate():
                 recapture(collection_choice, doc_choice)
                 break 
             if events=='S':
+                sg.popup_ok('Double Left click a lot to edit. Double Right click a row to edit that row. Press s to save and q to cancel')
                 calibrate_window.close()
                 singleSpaceOutline(collection_choice, doc_choice, parking_lot_info)
                 break
