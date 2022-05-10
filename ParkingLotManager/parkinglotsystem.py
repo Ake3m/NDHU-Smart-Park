@@ -47,7 +47,7 @@ row_edit=False
 row_was_edited=False
 
 #CONSTANTS SECTION
-CAMERA_INPUT=0 #Change this depending on onboard or external webcam
+CAMERA_INPUT=1 #Change this depending on onboard or external webcam
 YOLOV3_WEIGHTS='./ParkingLotManager/yolov3/yolov3-custom_last.weights' #Change this to edit the path to the yolov3 weights path
 YOLOV3_CFG='./ParkingLotManager/yolov3/yolov3-custom.cfg' #Change this to edit the path to the cfg file
 #YOLO CONFIGURATION SECTION
