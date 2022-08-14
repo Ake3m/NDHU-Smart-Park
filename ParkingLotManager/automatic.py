@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""# Parking Block Detection on Parking Lots"""
-
 import numpy as np
 import cv2 as cv
 from shapely.geometry import Polygon
@@ -12,16 +8,16 @@ def find_adj_mat_old(vertices, lines_centroids):
         diff1 = vertices-v1
         dv = np.abs(diff1[:,0])+np.abs(diff1[:,1])#np.linalg.norm(vertices-v1,axis=1)
         idx = np.argsort(dv)
-        print(i, idx[:5])
+        
         for j, v2 in enumerate(vertices[idx[:5]]):
             if i!=idx[j]:
                 midpt = (v1+v2)/2
-                #print(lines_centroids-midpt)
+               
                 diff2 = lines_centroids - midpt
                 d = np.linalg.norm(diff2, axis=1)
-                #print(d)
+               
                 nearest_neighbor = np.argmin(d)
-                print(i, idx[j], nearest_neighbor, d[nearest_neighbor])
+               
                 if d[nearest_neighbor]<=20:
                     adj_mat[i,idx[j]] = 1
                     adj_mat[idx[j],i] = 1
@@ -41,7 +37,7 @@ def find_adj_mat(vertex_boxes, line_boxes):
             box2 = [vb[0], vb[0]+vb[2], vb[1], vb[1]+vb[3]]
             if box_intersect(box1, box2):
                 touched_vertices.append(j)
-        #print(i, touched_vertices)
+        
         if len(touched_vertices)!=2:
             continue
         adj_mat[touched_vertices[0],touched_vertices[1]] = 1
@@ -96,7 +92,7 @@ def is_convex(points):
 
 def AOI(vertices):
     polygon = Polygon(vertices)
-    #print(vertices)
+   
     minx = np.min(vertices[:,0])
     maxx = np.max(vertices[:,0])
     miny = np.min(vertices[:,1])
@@ -111,15 +107,14 @@ def DFS_new(graph, marked, n, vert, start, count, path, cycles, vert_coords):
         # mark vert as un-visited to make
         # it usable again.
         marked[vert] = False
-        # print(path+[vert])
+        
         box = []
-        # print(path)
         for k in range(len(path)):
             box.append(vert_coords[path[k]])
         box = np.array(box)
         if AOI(box) >= 0.55:
             new_path = path + [start]
-            # print(new_path)
+           
             s = set(new_path)
             duplicated = False
             for e in cycles:
@@ -140,7 +135,7 @@ def DFS_new(graph, marked, n, vert, start, count, path, cycles, vert_coords):
             # DFS for searching path by decreasing
             # length by 1
             path = path + [i]
-            # print(path)
+            
             count = DFS_new(graph, marked, n-1, i, start, count, path, cycles, vert_coords)
             path = path[:-1]
   
@@ -162,7 +157,7 @@ def DFS(graph, marked, n, vert, start, count, path, cycles):
         # vertex start
         if graph[vert][start] == 1:
             new_path = path + [start]
-            # print(new_path)
+            
             s = set(new_path)
             duplicated = False
             for e in cycles:
@@ -183,7 +178,7 @@ def DFS(graph, marked, n, vert, start, count, path, cycles):
             # DFS for searching path by decreasing
             # length by 1
             path = path + [i]
-            # print(path)
+            
             count = DFS(graph, marked, n-1, i, start, count, path, cycles)
             path = path[:-1]
   
@@ -217,23 +212,16 @@ def sortRow(points, iterations):
     z,x,y=points.shape
     for p in range(iterations):
         for k in range(z-1):
-                # print('{} and {}'.format(points[k], points[k+1]))
                 if points[k,0,0]>=points[k+1,0,0]:
                     temp=points[k].copy()
                     points[k]=points[k+1].copy()
                     points[k+1]=temp.copy()
-                    # print('{} and {} swapped'.format(point_arr[k], point_arr[k+1]))
     return points
 
-# filename = 'mask.jpg' #'lot6.png'
-# img = cv.imread(filename)
-# gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-# gray = np.float32(gray)
-# gray = 1 - gray
+
 
 
 def sortPts(pts):
-    # print('Before sorting:{}'.format(pts))
     ptsCopy=pts.copy()
     originalOrder=[i for i in range(len(pts))]
     for i in range(len(pts)):
@@ -247,7 +235,6 @@ def sortPts(pts):
                 temp=originalOrder[j]
                 originalOrder[j]=originalOrder[j+1]
                 originalOrder[j]=temp
-    # print('After sorting:{}'.format(pts))
     if ptsCopy[0][0]>ptsCopy[1][0]:
         temp=ptsCopy[0].copy()
         ptsCopy[0]=ptsCopy[1].copy()
@@ -262,12 +249,11 @@ def sortPts(pts):
     
 
 
+#outline functionc called in the parking lot system that accepts a photo name
 def outline(selected_img):
     img = cv.imread('./ParkingLotManager/Samples/{}'.format(selected_img)) # read the image
-    print(img.shape)
     threshold = 135
     mask = (img[:,:,0]>threshold) & (img[:,:,1]>threshold) & (img[:,:,2]>threshold) # generate a mask of the white lines
-    # cv.imshow(mask*255)
     cp_out = cv.connectedComponentsWithStats(mask.astype(np.int8), 4, cv.CV_16U) # do connected component labelling on the mask
     (numLabels1, labels1, stats1, centroids1) = cp_out # retrieve the statistics of the found connected components
     print(stats1) # print the statistics of the found connected components
@@ -277,8 +263,6 @@ def outline(selected_img):
         if (stats1[i,3]*stats1[i,4])>(0.65*img.shape[0]*img.shape[1]): # keep the white-line component if its bounding box size>0.65 parking lot area)
             new_mask = new_mask | (labels1==i) # add all pixels of this white-line connected component
             candidate_cp.append(i) # add the component ID into the list
-    # cv.imshow(new_mask*255) # show all white lines kept in the mask
-
     # Since there might be some very small white holes inside the white-line components, we need to fill them to avoid the false detection of corners
     kernel = np.ones((5,5),np.uint8) # we use the morphological closing operation to do the hole filling
     res = cv.morphologyEx(new_mask.astype(np.float32),cv.MORPH_CLOSE,kernel) # result of the hole filling
@@ -288,47 +272,36 @@ def outline(selected_img):
     cv.imwrite('mask.jpg', (255*(1-res)).astype(np.uint8)) # write the result to a jpg file
     # cv2_imshow(res*255) # show the result (with no holes inside the white lines)
 
-    # Now, we start the corner detection
+    #Corner detection can now begin
     gray = np.float32(1-res) # convert to gray image
     dst = cv.cornerHarris(gray,2,3,0.1) # detect corners
     dst = cv.dilate(dst,None,iterations=10) # dilate the corners so that neighboring corners can be merged into one
     img[dst>0.05*dst.max()]=[0,0,255] # plot the corners over the input image for visualization
     corners = (dst>0.05*dst.max()).astype(np.int8)
-    # cv2_imshow(corners*255)
+    
     cv.imshow("img",img) # show the result of the corner detection
 
-    # dst = cv.cornerHarris(gray,2,3,0.04)
-    # #result is dilated for marking the corners, not important
-    # dst = cv.dilate(dst,None,iterations=5)
-    # # Threshold for an optimal value, it may vary depending on the image.
-    # img[dst>0.05*dst.max()]=[0,0,255]
-    # corners = (dst>0.05*dst.max()).astype(np.int8)
-    # cv2_imshow(img)
-    # cv2_imshow(corners*255)
 
     output1 = cv.connectedComponentsWithStats(corners, 4, cv.CV_16U)
     (numLabels1, labels1, stats1, centroids1) = output1
     centroids1, stats1 = centroids1[1:], stats1[1:]
-    #print(numLabels1-1, stats1) #,centroids1)
     img_copy = img.copy()
     for i in range(len(centroids1)):
         txt = '%d'%i
         cv.putText(img_copy, txt, (int(centroids1[i][0]),int(centroids1[i][1])), cv.FONT_HERSHEY_PLAIN, 1, (200, 0, 0), 1, cv.LINE_AA)
-    # cv.imshow("copy",img_copy)
+   
 
     edges = gray.copy()
     for i in range(1, numLabels1):
         comp = labels1==i
         edges[:,:][comp] = 255 #np.random.randint(0,255)
-        # edges[:,:,1][comp] = 255 #np.random.randint(0,255)
-        # edges[:,:,2][comp] = 255 #np.random.randint(0,255)
     cv.imshow("edges",edges)
 
     e = (edges[:,:]==0).astype(np.int8)
     output2 = cv.connectedComponentsWithStats(e, 4, cv.CV_16U)
     (numLabels2, labels2, stats2, centroids2) = output2
     centroids2, stats2 = centroids2[1:], stats2[1:]
-    #print(numLabels2-1, stats2) # ,centroids2)
+    
     for i in range(len(centroids2)):
         txt = '%d'%i
         cv.putText(img_copy, txt, (int(centroids2[i][0]),int(centroids2[i][1])), cv.FONT_HERSHEY_PLAIN, 1, (0, 200, 0), 1, cv.LINE_AA)
@@ -337,17 +310,14 @@ def outline(selected_img):
     for i in range(1, numLabels2):
         comp = labels2==i
         lines[:,:][comp] = np.random.randint(0,255)
-        # lines[:,:,1][comp] = np.random.randint(0,255)
-        # lines[:,:,2][comp] = np.random.randint(0,255)
+        
     cv.imshow("line",lines)
 
     adjmat = find_adj_mat(stats1, stats2)
-    print(adjmat)
+    
 
     n = 4
     num_cycles, cycles = findCycles(adjmat, n, centroids1)
-    print("Total cycles of length ",n," are ", num_cycles)
-    print(cycles)
     original_cycles=cycles
     out_img = img.copy()
     out_img2=img.copy()
@@ -358,7 +328,7 @@ def outline(selected_img):
     lots_per_row=0
     cv.destroyAllWindows()
     alreadyAdded=[False for c in cycles]
-    while doAgain:
+    while doAgain:#loop to ensure every box can be dealt with
         done=True
         out_img=img.copy()
         for i,c in enumerate(cycles):
@@ -366,12 +336,8 @@ def outline(selected_img):
             if alreadyAdded[i]==False:
                 for j in range(4):
                     pts.append([np.round(centroids1[c[j]][0]), np.round(centroids1[c[j]][1])])
-                # print('PTS Before sorting and rotate: {}'.format(pts))
-                # pts=sortPts(pts)
                 pts=sortPts(pts)
-                # print('PTS After sorting and rotate: {}'.format(pts))
                 pts = np.array(pts, np.int32)
-                # pts = pts.reshape((-1,1,2))
                 cv.polylines(out_img,[pts],True,(0,255,255),5)
                 cv.imshow("Point Selection",out_img)
                 cv.imshow("Confirmation", out_img2)
@@ -408,5 +374,3 @@ def outline(selected_img):
 
 
     return parkingLot, lots_per_row
-
-
